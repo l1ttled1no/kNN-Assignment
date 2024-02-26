@@ -19,9 +19,31 @@ public:
     virtual void reverse() = 0;
 };
 
+template<typename T>
+class ArrayList : public List<T> {
+    protected:
+        T* data;
+        int capacity;
+        int size;
+    public:
+        void arrayFull();
+        void push_back(T value) override;
+        void push_front(T value) override;
+        void insert(int index, T value) override;
+        void remove(int index) override;
+        T& get(int index) const override;
+        int length() const override;
+        void clear() override;
+        void print() const override;
+        void reverse() override;
+
+
+};
+
 class Dataset {
 private:
-    List<List<int>*>* data;
+    // List<List<int>*>* data;
+    ArrayList<ArrayList<int>*>* data;
     //You may need to define more
 public:
     Dataset();
