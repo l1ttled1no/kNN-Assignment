@@ -337,7 +337,9 @@ void Dataset::columns() const
 //     delete this->colData;
 //     delete this->data;
 // }
-
+List<List<int>*>* Dataset::getData() const {
+    return this->data;
+}
 bool Dataset::drop (int axis, int index, string column) {
     switch (axis) {
         case 0: {

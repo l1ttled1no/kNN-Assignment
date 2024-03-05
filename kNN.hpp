@@ -83,6 +83,7 @@ public:
     void printTail(int nRows = 5, int nCols = 5) const;
     void getShape(int& nRows, int& nCols) const;
     void columns() const;
+    List<List<int>*>* getData() const;
     // void clear();
     bool drop(int axis = 0, int index = 0, std::string columns = "");
     Dataset extract(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1) const;
