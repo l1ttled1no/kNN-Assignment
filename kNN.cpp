@@ -39,6 +39,23 @@ string commaToSpace(string str)
     for (int i = 0; i < str.length(); i++) { if (str[i] == ',') { str[i] = ' '; } }
     return str;
 }
+
+void train_test_split(Dataset& X, Dataset& y, double test_size, 
+                      Dataset& X_train, Dataset& X_test, 
+                      Dataset& y_train, Dataset& y_test) 
+{
+    int trainRows, trainCol, testRows, testCol;
+    X.getShape(trainRows, trainCol);
+    y.getShape(testRows, testCol);
+
+    // Extract train data
+    X_train = X.extract(0, trainRows * test_size, 0, -1);
+    y_train = y.extract(trainRows * test_size , 0, -1);
+
+    // Extract test data
+    X_test = X.extract(0, testRows * test_size, 0, -1);
+    y_test = y.extract(testRows * test_size, -1, 0, -1);
+}
 /*--------------------end of Other supporting functions--------------------*/
 /* ----------------- LinkedList ----------------- */
 template<typename T>
@@ -176,6 +193,12 @@ void LList<T>::reverse()
     head = prev;
 }
 
+// template<typename T>
+// void LList<T>::begin() {
+//     Node* temp = head;
+//     cout << temp->data << endl;
+// }
+
 
 template<typename T>
 List<T>* LList<T>::subList(int start, int end)
@@ -224,8 +247,11 @@ Dataset::Dataset(const Dataset &other)
 {
     this->colData = new LList<string>();
     this->data = new LList<List<int>*>();
-    for (int i = 0; i < other.colData->length(); i++) { this->colData->push_back(other.colData->get(i)); }
-    for (int i = 0; i < other.data->length(); i++)
+    int size = other.colData->length();
+    for (int i = 0; i < size; i++) { 
+        this->colData->push_back(other.colData->get(i)); 
+    }
+    for (int i = 0; i < size; i++)
     {
         LList<int> *temp = new LList<int>();
         for (int j = 0; j < other.data->get(i)->length(); j++) 
@@ -237,28 +263,11 @@ Dataset::Dataset(const Dataset &other)
 }
 
 
+
 Dataset& Dataset::operator=(const Dataset &other)
 {
-    if (this != &other)
-    {
-        delete this->colData;
-        delete this->data;
-        this->colData = new LList<string>();
-        this->data = new LList<List<int>*>();
-        for (int i = 0; i < other.colData->length(); i++){
-            this->colData->push_back(other.colData->get(i));
-        }
-        for (int i = 0; i < other.data->length(); i++)
-        {
-            LList<int> *temp = new LList<int>();
-            for (int j = 0; j < other.data->get(i)->length(); j++) 
-            { 
-                temp->push_back(other.data->get(i)->get(j)); 
-            }
-            this->data->push_back(temp);
-        }
-    }
-    return *this;
+    Dataset newDataset = Dataset(other);
+    return newDataset;
 }
 
 
@@ -328,11 +337,6 @@ void Dataset::getShape (int& nRows, int& nCols) const
 }
 
 
-void Dataset::columns() const
-{
-    this->colData->print();
-}
-
 // void Dataset::clear() {
 //     delete this->colData;
 //     delete this->data;
@@ -373,8 +377,14 @@ bool Dataset::drop (int axis, int index, string column) {
 }
 
 Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) const {
-    if (endRow < 0 || endRow >= this->data->length()) { endRow = this->data->length() - 1; }
-    if (endCol < 0 || endCol >= this->data->get(0)->length()) { endCol = this->data->get(0)->length() - 1; }
+    if (endRow == -1) {
+        startRow = 0;
+        endRow = this->data->length() - 1;
+    }
+    if (endCol == -1) {
+        startCol = 0;
+        endCol = this->colData->length() - 1;
+    }
 
     Dataset extractData; 
     
@@ -419,6 +429,66 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
     return distance;
 }
 
+Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
+    Dataset y_pred;
+    for (int i = 0; i < this->data->length(); i++) {
+        // Create a priority queue to store nearest neighbors
+        priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>>> pq;
+        for (int j = 0; j < X_train.data->length(); j++) {
+            double dist = this->EuclideanDistance(this->data->get(i), X_train.data->get(j));
+            pq.push(make_pair(dist, j));
+            if (pq.size() > k) {
+                pq.pop();
+            }
+        }
+        // Voting
+        unordered_map<int, int> votes;
+        while (!pq.empty()) {
+            int idx = pq.top().second;
+            int vote = y_train.data->get(idx)->get(0); // Assuming label is at index 0
+            votes[vote]++;
+            pq.pop();
+        }
+        // Find the most voted label
+        int max_vote = 0, pred_label = -1;
+        for (auto& vote : votes) {
+            if (vote.second > max_vote) {
+                max_vote = vote.second;
+                pred_label = vote.first;
+            }
+        }
+        // Add the prediction to y_pred
+        List<int>* pred = new LList<int>();
+        pred->push_back(pred_label);
+        y_pred.data->push_back(pred);
+    }
+    return y_pred;
+}
 
+double Dataset::score(const Dataset& y_test) const {
+    if (this->data->length() != y_test.data->length()) { return -1; }
+    int count = 0;
+    for (int i = 0; i < this->data->length(); i++) {
+        if (EuclideanDistance(this->data->get(i), y_test.data->get(i)) == 0) { count++; }
+    }
+    return (double)count / this->data->length();
+}
 /* ----------------- end of Dataset ----------------- */
 
+/* ----------------- start of kNN ----------------- */
+kNN::kNN(int k) { this->k = k; }
+
+void kNN::fit(const Dataset& X_train, const Dataset& y_train) {
+    this->X_train = X_train;
+    this->y_train = y_train;
+}
+
+Dataset kNN::predict(const Dataset& X_test) {
+    return X_test.predict(this->X_train, this->y_train, this->k);
+}
+
+double kNN::score(const Dataset& y_test, const Dataset& y_pred) {
+    return y_test.score(y_pred);
+}
+
+/* ----------------- end of kNN ----------------- */
