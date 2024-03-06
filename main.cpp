@@ -13,7 +13,19 @@ void tc1(){
     Dataset X_train, X_test, y_train, y_test;
     Dataset feature = dataset.extract(0, -1, 1, -1);
     Dataset label = dataset.extract(0, -1, 0, 0);
+    // feature.printHead(1000, 1000);
+    // label.printHead(1000, 1000);
+
+
     train_test_split(feature, label, 0.2, X_train, X_test, y_train, y_test);
+    cout << "X_train: " << endl;
+    X_train.printHead(1000, 1000);
+    cout << "X_test: " << endl;
+    X_test.printHead(1000, 1000);
+    cout << "y_train: " << endl;
+    y_train.printHead(1000, 1000);
+    cout << "y_test: " << endl;
+    y_test.printHead(1000, 1000);
 
 //     knn.fit(X_train, y_train);
 //     Dataset y_pred = knn.predict(X_test);

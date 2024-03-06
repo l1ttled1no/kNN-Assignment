@@ -1,62 +1,6 @@
 #include "kNN.hpp"
+// #include "main.hpp"
 
-/*--------------------------------------------------------------------------------*/
-/*
---------------------------------praying section-----------------------------------
-                      _oo0oo_
-                     o8888888o
-                     88" . "88
-                     (| -_- |)
-                     0\  =  /0
-                   ___/`---'\___
-                 .' \\|     |// '.
-                / \\|||  :  |||// \
-               / _||||| -:- |||||- \
-              |   | \\\  -  /// |   |
-              | \_|  ''\---/''  |_/ |
-              \  .-\__  '-'  ___/-. /
-            ___'. .'  /--.--\  `. .'___
-         ."" '<  `.___\_<|>_/___.' >' "".
-        | | :  `- \`.;`\ _ /`;.`/ - ` : | |
-        \  \ `_.   \_ __\ /__ _/   .-` /  /
-    =====`-.____`.___ \_____/___.-`___.-'=====
-                      `=---='
-
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-           Phật phù hộ, không bao giờ BUG
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
---------------------------------praying section-----------------------------------
-*/
-/*--------------------------------------------------------------------------------*/
-
-
-
-/*--------------------Others supporting functions--------------------*/
-string commaToSpace(string str)
-{
-    for (int i = 0; i < str.length(); i++) { if (str[i] == ',') { str[i] = ' '; } }
-    return str;
-}
-
-void train_test_split(Dataset& X, Dataset& y, double test_size, 
-                      Dataset& X_train, Dataset& X_test, 
-                      Dataset& y_train, Dataset& y_test) 
-{
-    int trainRows, trainCol, testRows, testCol;
-    X.getShape(trainRows, trainCol);
-    y.getShape(testRows, testCol);
-
-    // Extract train data
-    X_train = X.extract(0, trainRows * test_size, 0, -1);
-    y_train = y.extract(trainRows * test_size , 0, -1);
-
-    // Extract test data
-    X_test = X.extract(0, testRows * test_size, 0, -1);
-    y_test = y.extract(testRows * test_size, -1, 0, -1);
-}
-/*--------------------end of Other supporting functions--------------------*/
 /* ----------------- LinkedList ----------------- */
 template<typename T>
 void LList<T>::push_back(T value) 
@@ -94,8 +38,8 @@ template<typename T>
 void LList<T>::insert(int index, T value)
 {
     if(index < 0 || index > size) { return; }
-    if (index == 0)              { push_front(value); }
-    else if (index == size)      { push_back(value); }
+    if (index == 0)              { push_front (value); }
+    else if (index == size)      { push_back  (value); }
     else 
     {
         Node *temp = head;
@@ -169,11 +113,11 @@ void LList<T>::print() const
     Node *temp = head;
     for (int i = 0; i < size; i++)
     {
-        if(i == size - 1) { std::cout << temp->data; }
-        else { std::cout << temp->data << " "; }
+        if(i == size - 1) { cout << temp->data; }
+        else { cout << temp->data << " "; }
         temp = temp->next;
     }
-    std::cout << std::endl;
+    cout << endl;
 }
 
 
@@ -247,11 +191,10 @@ Dataset::Dataset(const Dataset &other)
 {
     this->colData = new LList<string>();
     this->data = new LList<List<int>*>();
-    int size = other.colData->length();
-    for (int i = 0; i < size; i++) { 
+    for (int i = 0; i < other.colData->length(); i++) { 
         this->colData->push_back(other.colData->get(i)); 
     }
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < other.data->length(); i++)
     {
         LList<int> *temp = new LList<int>();
         for (int j = 0; j < other.data->get(i)->length(); j++) 
@@ -266,81 +209,85 @@ Dataset::Dataset(const Dataset &other)
 
 Dataset& Dataset::operator=(const Dataset &other)
 {
-    Dataset newDataset = Dataset(other);
-    return newDataset;
+    this->colData = new LList<string>();
+    this->data = new LList<List<int>*>();
+    for (int i = 0; i < other.colData->length(); i++) { 
+        this->colData->push_back(other.colData->get(i)); 
+    }
+    for (int i = 0; i < other.data->length(); i++)
+    {
+        LList<int> *temp = new LList<int>();
+        for (int j = 0; j < other.data->get(i)->length(); j++) 
+        { 
+            temp->push_back(other.data->get(i)->get(j)); 
+        }
+        this->data->push_back(temp);
+    }
+    return *this;
 }
 
 
 bool Dataset::loadFromCSV(const char* fileName)
-{
+{   
     ifstream file(fileName);
-    if (!file.is_open()) { return false; }
-    string lineData; 
-    // analyzing Column names
-    file >> lineData;
-    lineData = commaToSpace(lineData); // replace comma with space
-    stringstream ss(lineData);
-    while (ss >> lineData) { this->colData->push_back(lineData); }
-
-    // analyzing data
-    while (file >> lineData)
+    if(file.is_open())
     {
-        lineData = commaToSpace(lineData); // replace comma with space
-        stringstream ss(lineData);
-        LList<int> *temp = new LList<int>();
-        while (ss >> lineData) { temp->push_back(stoi(lineData)); }
-        this->data->push_back(temp);
-    }
-
-    // close file and return true
-    file.close();
-    return true;
+        string dataLine; 
+        file >> dataLine;
+        dataLine = commaToSpace(dataLine);
+        stringstream strStream(dataLine);
+        string temp;
+        while (strStream >> temp) { this->colData->push_back(temp); }
+        while (file >> dataLine)
+        {
+            dataLine = commaToSpace(dataLine);
+            stringstream strStream(dataLine);
+            LList<int> *temp = new LList<int>();
+            int value;
+            while (strStream >> value) { temp->push_back(value); }
+            this->data->push_back(temp);
+        }
+        file.close();
+        return true;
+    }    
+    // cout << "Cannot open file" << endl;
+    return false; 
 }
-
 
 void Dataset::printHead(int nRows, int nCols) const
 {
-    if (nRows <= 0 || nCols <= 0) { return; }
-    if (nRows > this->data->length()) { nRows = this->data->length(); } // if nRows > length of data, then nRows = length of data
-    if (nCols > this->colData->length()) { nCols = this->colData->length(); } // if nCols > length of colData, then nCols = length of colData
-
-    // print column names
+    if (nRows <= 0 || nCols <= 0 || !this->data->length()) { return; }
+    if (nRows > this->data->length()) { nRows = this->data->length(); }
+    if (nCols > this->colData->length()) { nCols = this->colData->length(); }
     this->colData->printStartToEnd(0, nCols);
-
-    // print data
-    for (int i = 0; i < nRows; i++)
-    {
+    for (int i = 0; i < nRows; i++) {
         this->data->get(i)->printStartToEnd(0, nCols);
     }
 }
 
 void Dataset::printTail(int nRows, int nCols) const
 {
-    if (nRows <= 0 || nCols <= 0) { return; }
-    if (nRows > this->data->length()) { nRows = this->data->length(); } // if nRows > length of data, then nRows = length of data
-    if (nCols > this->colData->length()) { nCols = this->colData->length(); } // if nCols > length of colData, then nCols = length of colData
-
-    // print column names
+    if (nRows <= 0 || nCols <= 0 || !this->data->length()) { return; }
+    if (nRows > this->data->length()) { nRows = this->data->length(); }
+    if (nCols > this->colData->length()) { nCols = this->colData->length(); }
     this->colData->printStartToEnd(this->colData->length() - nCols, this->colData->length());
-
-    // print data
-    for (int i = this->data->length() - nRows; i < this->data->length(); i++)
-    {
+    for (int i = this->data->length() - nRows; i < this->data->length(); i++) {
         this->data->get(i)->printStartToEnd(this->colData->length() - nCols, this->colData->length());
     }
 }
 
 void Dataset::getShape (int& nRows, int& nCols) const
 {
+    if (!this->data->length()) { nRows = nCols = 0; return; }
     nRows = this->data->length();
     nCols = this->colData->length();
 }
 
+void Dataset::columns() const
+{
+    this->colData->print();
+}
 
-// void Dataset::clear() {
-//     delete this->colData;
-//     delete this->data;
-// }
 List<List<int>*>* Dataset::getData() const {
     return this->data;
 }
@@ -351,24 +298,25 @@ bool Dataset::drop (int axis, int index, string column) {
             if (index < 0 || index >= this->data->length()) { return false; }
             this->data->remove(index);
             return true;
-            break;
         }
         case 1: {
             //delete a column
             if (column == "") { return false; }
-            int index = -1;
+            //if theres no data, return false
+            if (this->data->length() == 0) { return false; }
+            int idx = -1;
             for (int i = 0; i < this->colData->length(); i++) {
                 if (this->colData->get(i) == column) { //find the index of the column
-                    index = i;
+                    idx = i;
                     break;
                 }
             }
-            if (index == -1) { return false; } //cannot find the column
+            if (idx == -1) { return false; } //cannot find the column
             else {
                 for (int i = 0; i < this->data->length(); i++) {
-                    this->data->get(i)->remove(index);
+                    this->data->get(i)->remove(idx);
                 }
-                this->colData->remove(index);
+                this->colData->remove(idx);
                 return true;
             }
         }
@@ -381,11 +329,14 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
         startRow = 0;
         endRow = this->data->length() - 1;
     }
-    if (endCol == -1) {
+    if (endCol == -1 ) {
         startCol = 0;
         endCol = this->colData->length() - 1;
     }
-
+    if (endRow >= this->data->length()) { endRow = this->data->length() - 1; }
+    if (endCol >= this->colData->length()) { endCol = this->colData->length() - 1; }
+    if (startRow > endRow || startCol > endCol) { return Dataset(); }
+    if (startRow < 0 || startCol < 0) { return Dataset(); }
     Dataset extractData; 
     
     // for (int i = startCol; i <= endCol; i++) {
@@ -400,9 +351,10 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
     // }
     // return extractData;
 
-    //using sub list
-    extractData.colData = this->colData->subList(startCol, endCol);
-    //using sublist
+    //using subList
+    for (int i = startCol; i <= endCol; i++) {
+        extractData.colData->push_back(this->colData->get(i));
+    }
     for (int i = startRow; i <= endRow; i++) {
         extractData.data->push_back(this->data->get(i)->subList(startCol, endCol));
     }
@@ -429,54 +381,56 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
     return distance;
 }
 
-Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
-    Dataset y_pred;
-    for (int i = 0; i < this->data->length(); i++) {
-        // Create a priority queue to store nearest neighbors
-        priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>>> pq;
-        for (int j = 0; j < X_train.data->length(); j++) {
-            double dist = this->EuclideanDistance(this->data->get(i), X_train.data->get(j));
-            pq.push(make_pair(dist, j));
-            if (pq.size() > k) {
-                pq.pop();
-            }
-        }
-        // Voting
-        unordered_map<int, int> votes;
-        while (!pq.empty()) {
-            int idx = pq.top().second;
-            int vote = y_train.data->get(idx)->get(0); // Assuming label is at index 0
-            votes[vote]++;
-            pq.pop();
-        }
-        // Find the most voted label
-        int max_vote = 0, pred_label = -1;
-        for (auto& vote : votes) {
-            if (vote.second > max_vote) {
-                max_vote = vote.second;
-                pred_label = vote.first;
-            }
-        }
-        // Add the prediction to y_pred
-        List<int>* pred = new LList<int>();
-        pred->push_back(pred_label);
-        y_pred.data->push_back(pred);
-    }
-    return y_pred;
-}
+// Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
+//     Dataset y_pred;
+//     for (int i = 0; i < this->data->length(); i++) {
+//         // Create a priority queue to store nearest neighbors
+//         priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>>> pq;
+//         for (int j = 0; j < X_train.data->length(); j++) {
+//             double dist = this->EuclideanDistance(this->data->get(i), X_train.data->get(j));
+//             pq.push(make_pair(dist, j));
+//             if (pq.size() > k) {
+//                 pq.pop();
+//             }
+//         }
+//         // Voting
+//         unordered_map<int, int> votes;
+//         while (!pq.empty()) {
+//             int idx = pq.top().second;
+//             int vote = y_train.data->get(idx)->get(0); // Assuming label is at index 0
+//             votes[vote]++;
+//             pq.pop();
+//         }
+//         // Find the most voted label
+//         int max_vote = 0, pred_label = -1;
+//         for (auto& vote : votes) {
+//             if (vote.second > max_vote) {
+//                 max_vote = vote.second;
+//                 pred_label = vote.first;
+//             }
+//         }
+//         // Add the prediction to y_pred
+//         List<int>* pred = new LList<int>();
+//         pred->push_back(pred_label);
+//         y_pred.data->push_back(pred);
+//     }
+//     return y_pred;
+// }
 
-double Dataset::score(const Dataset& y_test) const {
-    if (this->data->length() != y_test.data->length()) { return -1; }
-    int count = 0;
-    for (int i = 0; i < this->data->length(); i++) {
-        if (EuclideanDistance(this->data->get(i), y_test.data->get(i)) == 0) { count++; }
-    }
-    return (double)count / this->data->length();
-}
-/* ----------------- end of Dataset ----------------- */
+// double Dataset::score(const Dataset& y_test) const {
+//     if (this->data->length() != y_test.data->length()) { return -1; }
+//     int count = 0;
+//     for (int i = 0; i < this->data->length(); i++) {
+//         if (EuclideanDistance(this->data->get(i), y_test.data->get(i)) == 0) { count++; }
+//     }
+//     return (double)count / this->data->length();
+// }
+// /* ----------------- end of Dataset ----------------- */
 
 /* ----------------- start of kNN ----------------- */
 kNN::kNN(int k) { this->k = k; }
+
+kNN::~kNN() {}
 
 void kNN::fit(const Dataset& X_train, const Dataset& y_train) {
     this->X_train = X_train;
@@ -484,11 +438,63 @@ void kNN::fit(const Dataset& X_train, const Dataset& y_train) {
 }
 
 Dataset kNN::predict(const Dataset& X_test) {
-    return X_test.predict(this->X_train, this->y_train, this->k);
+    // return X_test.predict(this->X_train, this->y_train, this->k);
+    return X_test;
 }
 
 double kNN::score(const Dataset& y_test, const Dataset& y_pred) {
-    return y_test.score(y_pred);
+    // return y_test.score(y_pred);
+    return -1;
 }
 
 /* ----------------- end of kNN ----------------- */
+
+/*--------------------Other supporting functions--------------------*/
+string commaToSpace(string str)
+{
+    for (int i = 0; i < str.length(); i++) { if (str[i] == ',') { str[i] = ' '; } }
+    return str;
+}
+
+void train_test_split(Dataset& X, Dataset& y, double test_size, 
+                      Dataset& X_train, Dataset& X_test, 
+                      Dataset& y_train, Dataset& y_test) 
+{
+    int trainRows, trainCol, testRows, testCol;
+    X.getShape(trainRows, trainCol);
+    y.getShape(testRows, testCol);
+
+    // Extract train data
+    X_train = X.extract(0, trainRows * test_size, 0, -1);
+    y_train = y.extract(trainRows * test_size, -1, 0, -1);
+
+    // Extract test data
+    X_test = X.extract(0, testRows * test_size, 0, -1);
+    y_test = y.extract(testRows * test_size, -1, 0, -1);
+}
+
+
+
+/*--------------------end of Other supporting functions--------------------*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

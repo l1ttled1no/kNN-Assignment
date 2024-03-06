@@ -1,13 +1,8 @@
 #include "main.hpp"
-#include <algorithm>
-#include <queue>
-#include <cmath>
-#include <unordered_map>
 #pragma once
 /* TODO: Please design your data structure carefully so that you can work with the given dataset
  *       in this assignment. The below structures are just some suggestions.
  */
-
 /*--------------------Start of class List--------------------*/
 template<typename T>
 class List {
@@ -77,23 +72,22 @@ private:
     // ArrayList<ArrayList<int>*>* data;
     //You may need to define more
 public:
-    Dataset();
-    ~Dataset();
-    Dataset(const Dataset& other);
-    Dataset& operator=(const Dataset& other);
-    bool loadFromCSV(const char* fileName);
+    Dataset(); //Done
+    ~Dataset(); //Done
+    Dataset(const Dataset& other); //Done
+    Dataset& operator=(const Dataset& other); //Done
+    bool loadFromCSV(const char* fileName); //Done
     void printHead(int nRows = 5, int nCols = 5) const;
     void printTail(int nRows = 5, int nCols = 5) const;
     void getShape(int& nRows, int& nCols) const;
-    void columns() const {this->colData->print();}
+    void columns() const;
     List<List<int>*>* getData() const;
-    // void clear();
     bool drop(int axis = 0, int index = 0, std::string columns = "");
     Dataset extract(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1) const;
     double EuclideanDistance(const List<int>* a, const List<int>* b) const;
 
-    Dataset predict(const Dataset& X_train, const Dataset& Y_train, const int k) const;
-    double score(const Dataset& y_test) const;
+    // Dataset predict(const Dataset& X_train, const Dataset& Y_train, const int k) const;
+    // double score(const Dataset& y_test) const;
 };
 /*----------------------end of DataSet Class------------------------*/
 
@@ -108,6 +102,7 @@ private:
     //You may need to define more
 public:
     kNN(int k = 5);
+    ~kNN();
     void fit(const Dataset& X_train, const Dataset& y_train);
     Dataset predict(const Dataset& X_test);
     double score(const Dataset& y_test, const Dataset& y_pred);
@@ -120,4 +115,64 @@ void train_test_split(Dataset& X, Dataset& y, double test_size,
                       Dataset& X_train, Dataset& X_test, 
                       Dataset& y_train, Dataset& y_test);
 
-/*--------------------end of Other supporting functions--------------------*/
+//------------------ End of declaration ------------------//
+
+
+
+/*--------------------------------------------------------------------------------*/
+/*
+--------------------------------praying section-----------------------------------
+                      _oo0oo_
+                     o8888888o
+                     88" . "88
+                     (| -_- |)
+                     0\  =  /0
+                   ___/`---'\___
+                 .' \\|     |// '.
+                / \\|||  :  |||// \
+               / _||||| -:- |||||- \
+              |   | \\\  -  /// |   |
+              | \_|  ''\---/''  |_/ |
+              \  .-\__  '-'  ___/-. /
+            ___'. .'  /--.--\  `. .'___
+         ."" '<  `.___\_<|>_/___.' >' "".
+        | | :  `- \`.;`\ _ /`;.`/ - ` : | |
+        \  \ `_.   \_ __\ /__ _/   .-` /  /
+    =====`-.____`.___ \_____/___.-`___.-'=====
+                      `=---='
+
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+           Phật phù hộ, không bao giờ BUG
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+          _.-/`)
+         // / / )
+      .=// / / / )
+     //`/ / / / /
+    // /     ` /
+   ||         /
+    \\       /
+     ))    .'
+    //    /
+         /
+
+
+Our program, who art in memory,
+    called by thy name;
+  thy operating system run;
+thy function be done at runtime
+  as it was on development.
+Give us this day our daily output.
+And forgive us our code duplication,
+    as we forgive those who
+  duplicate code against us.
+And lead us not into frustration;
+  but deliver us from GOTOs.
+    For thine is algorithm,
+the computation, and the solution,
+    looping forever and ever.
+          Return;
+
+
+--------------------------------end of praying section---------------------------------
+*/
