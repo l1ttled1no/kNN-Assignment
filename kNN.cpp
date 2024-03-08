@@ -1,10 +1,10 @@
 #include "kNN.hpp"
-#include <algorithm>
-#include <queue>
-#include <utility>
-#include <vector>
-#include <functional>
-#include <unordered_map>
+// #include <algorithm>
+// #include <queue>
+// #include <utility>
+// #include <vector>
+// #include <functional>
+// #include <unordered_map>
 // #include "main.hpp"
 
 /* ----------------- LinkedList ----------------- */
@@ -387,23 +387,11 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
 }
 
 double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const {
-    List<int>* x_ = new LList<int>;
-    List<int>* y_ = new LList<int>;
-    int maxSize = max(x->length(), y->length());
-    for (int i = 0; i < maxSize; i++) {
-        if (i < x->length()) { x_->push_back(x->get(i)); }
-        else { x_->push_back(0); }
-        if (i < y->length()) { y_->push_back(y->get(i)); }
-        else { y_->push_back(0); }
-    }
     double distance = 0.00;
-    for (int i = 0; i < x_->length(); i++) {
-        distance += pow(x_->get(i) - y_->get(i), 2);
+    for (int i = 0; i < x->length(); i++) {
+        distance += pow(x->get(i) - y->get(i), 2);
     }
-    distance = sqrt(distance);
-    delete x_; 
-    delete y_;
-    return distance;
+    return sqrt(distance);
 }
 
 
@@ -487,36 +475,53 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
 
 Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
     Dataset y_pred;
-    for (int i = 0; i < this->data->length(); i++) {
-        // Create a priority queue to store nearest neighbors
-        std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, std::greater<std::pair<double, int>>> pq;
-        for (int j = 0; j < X_train.data->length(); j++) {
-            double dist = this->EuclideanDistance(this->data->get(i), X_train.data->get(j));
-            pq.push(std::make_pair(dist, j));
-            if (pq.size() > k) {
-                pq.pop();
+    y_pred.colData->push_back("label");
+    for (int i = 0; i < this->data->length(); ++i){
+        double distance[10000] = {0};
+        int labels[10000] = {0};
+        // for (int j = 0; j < X_train.data->length(); ++j){
+        //     double dist = EuclideanDistance(this->data->get(i), X_train.data->get(j));
+        //     distances.push_back(make_pair(dist, j));
+        // }
+        // for (int j = 0; j < distances.length() - 1; ++j){
+        //     int min_idx = j;
+        //     for (int k = j + 1; k < distances.length(); ++k){
+        //         if (distances.get(k).first < distances.get(min_idx).first){
+        //             min_idx = k;
+        //         }
+        //     }
+        //     swap(distances.get(j), distances.get(min_idx));
+        // }
+
+        for (int j = 0; j < X_train.data->length(); ++j){
+            distance[j] = EuclideanDistance(this->data->get(i), X_train.data->get(j));
+            labels[j] = y_train.data->get(j)->get(0);
+            // cout << "distance: " << distance[j] << " label: " << labels[j] << endl;
+        }
+
+        for (int j = 0; j < X_train.data->length() - 1; ++j){
+            int min_idx = j;
+            for (int k = j + 1; k < X_train.data->length(); ++k){
+                if (distance[k] < distance[min_idx]){
+                    min_idx = k;
+                }
+            }
+            if (min_idx != j){
+                swap(distance[j], distance[min_idx]);
+                swap(labels[j], labels[min_idx]);
             }
         }
-        // Voting
-        std::unordered_map<int, int> votes;
-        while (!pq.empty()) {
-            int idx = pq.top().second;
-            int vote = y_train.data->get(idx)->get(0); // Assuming label is at index 0
-            votes[vote]++;
-            pq.pop();
+
+        int label_counts[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        for (int j = 0; j < k; ++j){
+            label_counts[labels[j]]++;
         }
-        // Find the most voted label
-        int max_vote = 0, pred_label = -1;
-        for (auto& vote : votes) {
-            if (vote.second > max_vote) {
-                max_vote = vote.second;
-                pred_label = vote.first;
-            }
-        }
-        // Add the prediction to y_pred
-        List<int>* pred = new LList<int>();
-        pred->push_back(pred_label);
-        y_pred.data->push_back(pred);
+
+        int max_idx = findMax(label_counts);
+        cout << "max_idx: " << max_idx << endl;
+        List<int>* temp = new LList<int>;
+        temp->push_back(max_idx);
+        y_pred.data->push_back(temp);
     }
     return y_pred;
 }
@@ -549,7 +554,7 @@ void kNN::fit(const Dataset& X_train, const Dataset& y_train) {
 }
 
 Dataset kNN::predict(const Dataset& X_test) {
-    return this->X_train.predict(this->X_train, this->y_train, this->k);
+    return X_test.predict(this->X_train, this->y_train, this->k);
 }
 
 double kNN::score(const Dataset& y_test, const Dataset& y_pred) {
@@ -586,7 +591,15 @@ void train_test_split(Dataset& X, Dataset& y, double test_size,
     y_test = y.extract(trainSize, -1, 0, 0);
 }
 
-
+int findMax (int arr[]) {
+    int max = arr[0];
+    for (int i = 1; i < 10; i++) {
+        if (arr[i] > max) {
+            max = arr[i];
+        }
+    }
+    return max;
+}
 
 
 /*--------------------end of Other supporting functions--------------------*/

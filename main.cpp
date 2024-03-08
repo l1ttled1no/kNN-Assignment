@@ -17,7 +17,7 @@ void tc1(){
     // label.printHead(1000, 1000);
 
 
-    // train_test_split(feature, label, 0.2, X_train, X_test, y_train, y_test);
+    train_test_split(feature, label, 0.2, X_train, X_test, y_train, y_test);
     // cout << "X_train: " << endl;
     // X_train.printHead(1000, 1000);
     // cout << "X_test: " << endl;
