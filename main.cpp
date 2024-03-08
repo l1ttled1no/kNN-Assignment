@@ -17,23 +17,35 @@ void tc1(){
     // label.printHead(1000, 1000);
 
 
-    train_test_split(feature, label, 0.2, X_train, X_test, y_train, y_test);
-    cout << "X_train: " << endl;
-    X_train.printHead(1000, 1000);
-    cout << "X_test: " << endl;
-    X_test.printHead(1000, 1000);
-    cout << "y_train: " << endl;
-    y_train.printHead(1000, 1000);
-    cout << "y_test: " << endl;
-    y_test.printHead(1000, 1000);
+    // train_test_split(feature, label, 0.2, X_train, X_test, y_train, y_test);
+    // cout << "X_train: " << endl;
+    // X_train.printHead(1000, 1000);
+    // cout << "X_test: " << endl;
+    // X_test.printHead(1000, 1000);
+    // cout << "y_train: " << endl;
+    // y_train.printHead(1000, 1000);
+    // cout << "y_test: " << endl;
+    // y_test.printHead(1000, 1000);
 
-//     knn.fit(X_train, y_train);
-//     Dataset y_pred = knn.predict(X_test);
-//     double accuracy = knn.score(y_test, y_pred);
-//     cout << "Accuracy: " << accuracy << endl;
+    knn.fit(X_train, y_train);
+    Dataset y_pred = knn.predict(X_test);
+    double accuracy = knn.score(y_test, y_pred);
+    cout << "Accuracy: " << accuracy << endl;
 }
 
+// void tc2(){
+//     Dataset dataset;
+//     dataset.loadFromCSV("mnist.csv");
+//     int nRows, nCols;
 
+//     kNN knn;
+//     Dataset feature = dataset.extract(0, -1, 1, -1);
+//     Dataset label = dataset.extract(0, -1, 0, 0);
+//     feature.getShape(nRows, nCols);
+//     cout << "Feature shape: " << nRows << "x" << nCols << endl;
+//     label.getShape(nRows, nCols);
+//     cout << "Label shape: " << nRows << "x" << nCols << endl;
+// }
 
 // void tc2(){
 //     Dataset dataset;
@@ -69,6 +81,27 @@ void tc1(){
 //     cout << "After drop---------------------" << endl;
 //     data3.printHead(100,100);
 // }
+
+void tc3(){
+    Dataset dataset;
+    dataset.loadFromCSV("mnist.csv");
+    int nRows, nCols;
+
+    kNN knn;
+    Dataset X_train, X_test, y_train, y_test;
+    Dataset feature = dataset.extract(0, -1, 1, -1);
+    Dataset label = dataset.extract(0, -1, 0, 0);
+
+    train_test_split(feature, label, 0.2, X_train, X_test, y_train, y_test);
+    X_train.getShape(nRows, nCols);
+    cout << "X_train shape: " << nRows << "x" << nCols << endl;
+    X_test.getShape(nRows, nCols);
+    cout << "X_test shape: " << nRows << "x" << nCols << endl;
+    y_train.getShape(nRows, nCols);
+    cout << "y_train shape: " << nRows << "x" << nCols << endl;
+    y_test.getShape(nRows, nCols);
+    cout << "y_test shape: " << nRows << "x" << nCols << endl;
+}
 
 int main() {
     tc1();

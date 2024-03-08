@@ -1,4 +1,10 @@
 #include "kNN.hpp"
+#include <algorithm>
+#include <queue>
+#include <utility>
+#include <vector>
+#include <functional>
+#include <unordered_map>
 // #include "main.hpp"
 
 /* ----------------- LinkedList ----------------- */
@@ -143,6 +149,25 @@ void LList<T>::reverse()
 //     cout << temp->data << endl;
 // }
 
+template<typename T>
+void LList<T>::sort()
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        Node *min = head;
+        Node *temp = head;
+        for (int j = i + 1; j < size; j++)
+        {
+            if (temp->data < min->data) { min = temp; }
+            temp = temp->next;
+        }
+        swap(min->data, head->data);
+        head = head->next;
+    }
+    Node *temp = head;
+    while (temp->next != nullptr) { temp = temp->next; }
+    tail = temp;
+}
 
 template<typename T>
 List<T>* LList<T>::subList(int start, int end)
@@ -326,11 +351,11 @@ bool Dataset::drop (int axis, int index, string column) {
 
 Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) const {
     if (endRow == -1) {
-        startRow = 0;
+        // startRow = 0;
         endRow = this->data->length() - 1;
     }
     if (endCol == -1 ) {
-        startCol = 0;
+        // startCol = 0;
         endCol = this->colData->length() - 1;
     }
     if (endRow >= this->data->length()) { endRow = this->data->length() - 1; }
@@ -371,7 +396,7 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
         if (i < y->length()) { y_->push_back(y->get(i)); }
         else { y_->push_back(0); }
     }
-    double distance = 0;
+    double distance = 0.00;
     for (int i = 0; i < x_->length(); i++) {
         distance += pow(x_->get(i) - y_->get(i), 2);
     }
@@ -381,50 +406,136 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
     return distance;
 }
 
+
 // Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
-//     Dataset y_pred;
+//     Dataset y_pred; // label prediction
+//     // if the training data is empty, return empty dataset
+//     if (X_train.data->length() == 0 || y_train.data->length() == 0) {
+//         return y_pred;
+//     }
+//     // if the testing data is empty, return empty dataset
+//     if (this->data->length() == 0) {
+//         return y_pred;
+//     }
+//     // if the number of features in the training data is not equal to the number of features in the testing data, return empty dataset
+//     if (X_train.colData->length() != this->colData->length()) {
+//         return y_pred;
+//     }
+//     // this = X_test
+//     // Iterate through each test instance
 //     for (int i = 0; i < this->data->length(); i++) {
-//         // Create a priority queue to store nearest neighbors
-//         priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>>> pq;
+//         // Create lists to store distances and labels
+//         LList<double> distances;
+//         LList<List<int>*> labels;
+
+//         // Compute the distances between the test instance and each training instance
 //         for (int j = 0; j < X_train.data->length(); j++) {
-//             double dist = this->EuclideanDistance(this->data->get(i), X_train.data->get(j));
-//             pq.push(make_pair(dist, j));
-//             if (pq.size() > k) {
-//                 pq.pop();
+//             double dist = EuclideanDistance(this->data->get(i), X_train.data->get(j));
+//             distances.push_back(dist);
+//             labels.push_back(y_train.data->get(j));
+//         }
+
+//         // Sort the distances in ascending order along with their corresponding indices
+//         for (int j = 0; j < distances.length() - 1; j++) {
+//             int min_idx = j;
+//             for (int k = j + 1; k < distances.length(); k++) {
+//                 if (distances.get(k) < distances.get(min_idx)) {
+//                     min_idx = k;
+//                 }
 //             }
+//             swap(distances.get(j), distances.get(min_idx));
+//             swap(labels.get(j), labels.get(min_idx));
 //         }
-//         // Voting
-//         unordered_map<int, int> votes;
-//         while (!pq.empty()) {
-//             int idx = pq.top().second;
-//             int vote = y_train.data->get(idx)->get(0); // Assuming label is at index 0
-//             votes[vote]++;
-//             pq.pop();
+
+//         // Create a list to store the k nearest neighbors' labels
+//         LList<List<int>*> k_neighbors;
+
+//         // Select the k nearest neighbors
+//         for (int j = 0; j < k; j++) {
+//             k_neighbors.push_back(labels.get(j));
 //         }
-//         // Find the most voted label
-//         int max_vote = 0, pred_label = -1;
-//         for (auto& vote : votes) {
-//             if (vote.second > max_vote) {
-//                 max_vote = vote.second;
-//                 pred_label = vote.first;
-//             }
+
+//         // Compute the majority label
+//         // Label is from 0 to 9 
+//         int label_counts[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // Assuming binary classification (0 and 1)
+//         for (int j = 0; j < k_neighbors.length(); j++) {
+//             label_counts[k_neighbors.get(j)->get(0)]++;
 //         }
-//         // Add the prediction to y_pred
-//         List<int>* pred = new LList<int>();
-//         pred->push_back(pred_label);
-//         y_pred.data->push_back(pred);
+
+//         // Create a new list with the predicted label
+//         LList<int>* predicted_label = new LList<int>;
+//         int max_idx = 0;
+//         for (int j = 1; j < 10; j++) {
+//             if (label_counts[j] > label_counts[max_idx]) { max_idx = j; }
+//         }
+//         predicted_label->push_back(max_idx);
 //     }
 //     return y_pred;
 // }
 
-// double Dataset::score(const Dataset& y_test) const {
-//     if (this->data->length() != y_test.data->length()) { return -1; }
-//     int count = 0;
-//     for (int i = 0; i < this->data->length(); i++) {
-//         if (EuclideanDistance(this->data->get(i), y_test.data->get(i)) == 0) { count++; }
+// Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
+//     Dataset y_pred;
+//     if (X_train.data->length()    == 0 || 
+//         y_train.data->length()    == 0 || 
+//         this->data->length()      == 0 || 
+//         X_train.colData->length() != this->colData->length()) {
+//         return y_pred;
 //     }
-//     return (double)count / this->data->length();
+
 // }
+
+
+Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
+    Dataset y_pred;
+    for (int i = 0; i < this->data->length(); i++) {
+        // Create a priority queue to store nearest neighbors
+        std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, std::greater<std::pair<double, int>>> pq;
+        for (int j = 0; j < X_train.data->length(); j++) {
+            double dist = this->EuclideanDistance(this->data->get(i), X_train.data->get(j));
+            pq.push(std::make_pair(dist, j));
+            if (pq.size() > k) {
+                pq.pop();
+            }
+        }
+        // Voting
+        std::unordered_map<int, int> votes;
+        while (!pq.empty()) {
+            int idx = pq.top().second;
+            int vote = y_train.data->get(idx)->get(0); // Assuming label is at index 0
+            votes[vote]++;
+            pq.pop();
+        }
+        // Find the most voted label
+        int max_vote = 0, pred_label = -1;
+        for (auto& vote : votes) {
+            if (vote.second > max_vote) {
+                max_vote = vote.second;
+                pred_label = vote.first;
+            }
+        }
+        // Add the prediction to y_pred
+        List<int>* pred = new LList<int>();
+        pred->push_back(pred_label);
+        y_pred.data->push_back(pred);
+    }
+    return y_pred;
+}
+
+
+double Dataset::score(const Dataset& y_test) const {
+    if (this->data->length() != y_test.data->length() || 
+        this->data->length() == 0 ||
+        y_test.data->length() == 0){ 
+        return -1; 
+        }
+    int count = 0;
+    for (int i = 0; i < this->data->length(); i++) {
+        if (this->data->get(i)->get(0) == y_test.data->get(i)->get(0)) {
+            count++;
+        }
+    }
+    return (double)count / this->data->length();
+}
 // /* ----------------- end of Dataset ----------------- */
 
 /* ----------------- start of kNN ----------------- */
@@ -438,13 +549,12 @@ void kNN::fit(const Dataset& X_train, const Dataset& y_train) {
 }
 
 Dataset kNN::predict(const Dataset& X_test) {
-    // return X_test.predict(this->X_train, this->y_train, this->k);
-    return X_test;
+    return this->X_train.predict(this->X_train, this->y_train, this->k);
 }
 
 double kNN::score(const Dataset& y_test, const Dataset& y_pred) {
-    // return y_test.score(y_pred);
-    return -1;
+    return y_test.score(y_pred);
+    // return -1;
 }
 
 /* ----------------- end of kNN ----------------- */
@@ -456,45 +566,29 @@ string commaToSpace(string str)
     return str;
 }
 
+int roundNumber(double num) {
+    return (num > 0.0) ? (num + 0.5) : (num - 0.5);
+}
+
 void train_test_split(Dataset& X, Dataset& y, double test_size, 
                       Dataset& X_train, Dataset& X_test, 
                       Dataset& y_train, Dataset& y_test) 
 {
-    int trainRows, trainCol, testRows, testCol;
-    X.getShape(trainRows, trainCol);
-    y.getShape(testRows, testCol);
-
-    // Extract train data
-    X_train = X.extract(0, trainRows * test_size, 0, -1);
-    y_train = y.extract(trainRows * test_size, -1, 0, -1);
-
-    // Extract test data
-    X_test = X.extract(0, testRows * test_size, 0, -1);
-    y_test = y.extract(testRows * test_size, -1, 0, -1);
+    if (test_size <= 0 || test_size >= 1) { return; }
+    int nRows, nCols; 
+    X.getShape(nRows, nCols);
+    //training split 
+    int trainSize = roundNumber(nRows * (1 - test_size));
+    X_train = X.extract(0, trainSize - 1, 0, - 1);
+    y_train = y.extract(0, trainSize - 1, 0, 0);
+    //testing split
+    X_test = X.extract(trainSize, -1, 0, -1);
+    y_test = y.extract(trainSize, -1, 0, 0);
 }
 
 
 
+
 /*--------------------end of Other supporting functions--------------------*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

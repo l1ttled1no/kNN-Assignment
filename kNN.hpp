@@ -58,7 +58,7 @@ class LList : public List<T> {
         void reverse();
         // void begin();
         // void end();
-
+        void sort();
         List<T>* subList(int start, int end);
         void printStartToEnd (int start, int end) const;
 };
@@ -85,9 +85,8 @@ public:
     bool drop(int axis = 0, int index = 0, std::string columns = "");
     Dataset extract(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1) const;
     double EuclideanDistance(const List<int>* a, const List<int>* b) const;
-
-    // Dataset predict(const Dataset& X_train, const Dataset& Y_train, const int k) const;
-    // double score(const Dataset& y_test) const;
+    Dataset predict(const Dataset& X_train, const Dataset& Y_train, const int k) const;
+    double score(const Dataset& y_test) const;
 };
 /*----------------------end of DataSet Class------------------------*/
 
@@ -107,6 +106,9 @@ public:
     Dataset predict(const Dataset& X_test);
     double score(const Dataset& y_test, const Dataset& y_pred);
 };
+
+
+
 
 /*--------------------Others supporting functions--------------------*/
 string commaToSpace(string str = "");
