@@ -1,11 +1,5 @@
 #include "kNN.hpp"
-// #include <algorithm>
-// #include <queue>
-// #include <utility>
-// #include <vector>
-// #include <functional>
-// #include <unordered_map>
-// #include "main.hpp"
+
 
 /*--------------------Start of class LList--------------------*/
 /* ----------------- LinkedList ----------------- */
@@ -374,85 +368,6 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
     }
     return sqrt(distance);
 }
-
-
-// Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
-//     Dataset y_pred; // label prediction
-//     // if the training data is empty, return empty dataset
-//     if (X_train.data->length() == 0 || y_train.data->length() == 0) {
-//         return y_pred;
-//     }
-//     // if the testing data is empty, return empty dataset
-//     if (this->data->length() == 0) {
-//         return y_pred;
-//     }
-//     // if the number of features in the training data is not equal to the number of features in the testing data, return empty dataset
-//     if (X_train.colData->length() != this->colData->length()) {
-//         return y_pred;
-//     }
-//     // this = X_test
-//     // Iterate through each test instance
-//     for (int i = 0; i < this->data->length(); i++) {
-//         // Create lists to store distances and labels
-//         LList<double> distances;
-//         LList<List<int>*> labels;
-
-//         // Compute the distances between the test instance and each training instance
-//         for (int j = 0; j < X_train.data->length(); j++) {
-//             double dist = EuclideanDistance(this->data->get(i), X_train.data->get(j));
-//             distances.push_back(dist);
-//             labels.push_back(y_train.data->get(j));
-//         }
-
-//         // Sort the distances in ascending order along with their corresponding indices
-//         for (int j = 0; j < distances.length() - 1; j++) {
-//             int min_idx = j;
-//             for (int k = j + 1; k < distances.length(); k++) {
-//                 if (distances.get(k) < distances.get(min_idx)) {
-//                     min_idx = k;
-//                 }
-//             }
-//             swap(distances.get(j), distances.get(min_idx));
-//             swap(labels.get(j), labels.get(min_idx));
-//         }
-
-//         // Create a list to store the k nearest neighbors' labels
-//         LList<List<int>*> k_neighbors;
-
-//         // Select the k nearest neighbors
-//         for (int j = 0; j < k; j++) {
-//             k_neighbors.push_back(labels.get(j));
-//         }
-
-//         // Compute the majority label
-//         // Label is from 0 to 9 
-//         int label_counts[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // Assuming binary classification (0 and 1)
-//         for (int j = 0; j < k_neighbors.length(); j++) {
-//             label_counts[k_neighbors.get(j)->get(0)]++;
-//         }
-
-//         // Create a new list with the predicted label
-//         LList<int>* predicted_label = new LList<int>;
-//         int max_idx = 0;
-//         for (int j = 1; j < 10; j++) {
-//             if (label_counts[j] > label_counts[max_idx]) { max_idx = j; }
-//         }
-//         predicted_label->push_back(max_idx);
-//     }
-//     return y_pred;
-// }
-
-// Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
-//     Dataset y_pred;
-//     if (X_train.data->length()    == 0 || 
-//         y_train.data->length()    == 0 || 
-//         this->data->length()      == 0 || 
-//         X_train.colData->length() != this->colData->length()) {
-//         return y_pred;
-//     }
-
-// }
-
 
 Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
     //this = X_test
