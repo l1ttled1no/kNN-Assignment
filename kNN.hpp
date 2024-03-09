@@ -117,8 +117,9 @@ void train_test_split(Dataset& X, Dataset& y, double test_size,
                       Dataset& X_train, Dataset& X_test, 
                       Dataset& y_train, Dataset& y_test);
 
-int findMax (int arr[]);
+int findMaxIndexOf10 (int arr[]);
 
+int roundedNumber (double num);
 //------------------ End of declaration ------------------//
 
 

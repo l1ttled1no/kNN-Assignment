@@ -7,6 +7,7 @@
 // #include <unordered_map>
 // #include "main.hpp"
 
+/*--------------------Start of class LList--------------------*/
 /* ----------------- LinkedList ----------------- */
 template<typename T>
 void LList<T>::push_back(T value) 
@@ -350,32 +351,11 @@ bool Dataset::drop (int axis, int index, string column) {
 }
 
 Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) const {
-    if (endRow == -1) {
-        // startRow = 0;
-        endRow = this->data->length() - 1;
-    }
-    if (endCol == -1 ) {
-        // startCol = 0;
-        endCol = this->colData->length() - 1;
-    }
-    if (endRow >= this->data->length()) { endRow = this->data->length() - 1; }
-    if (endCol >= this->colData->length()) { endCol = this->colData->length() - 1; }
+    if (endRow == -1 || endRow >= this->data->length()) endRow = this->data->length() - 1;
+    if (endCol == -1 || endCol >= this->colData->length()) endCol = this->colData->length() - 1;
     if (startRow > endRow || startCol > endCol) { return Dataset(); }
     if (startRow < 0 || startCol < 0) { return Dataset(); }
     Dataset extractData; 
-    
-    // for (int i = startCol; i <= endCol; i++) {
-    //     extractData.colData->push_back(this->colData->get(i));
-    // }
-    // for (int i = startRow; i <= endRow; i++) {
-    //     List <int>* temp1 = new LList<int>;
-    //     for (int j = startCol; j <= endCol; j++) {
-    //         temp1->push_back(this->data->get(i)->get(j));
-    //     }
-    //     extractData.data->push_back(temp1);
-    // }
-    // return extractData;
-
     //using subList
     for (int i = startCol; i <= endCol; i++) {
         extractData.colData->push_back(this->colData->get(i));
@@ -388,6 +368,7 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
 
 double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const {
     double distance = 0.00;
+    if (x->length() != y->length()) { return -1; }
     for (int i = 0; i < x->length(); i++) {
         distance += pow(x->get(i) - y->get(i), 2);
     }
@@ -474,31 +455,19 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
 
 
 Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
+    //this = X_test
     Dataset y_pred;
     y_pred.colData->push_back("label");
     for (int i = 0; i < this->data->length(); ++i){
-        double distance[10000] = {0};
-        int labels[10000] = {0};
-        // for (int j = 0; j < X_train.data->length(); ++j){
-        //     double dist = EuclideanDistance(this->data->get(i), X_train.data->get(j));
-        //     distances.push_back(make_pair(dist, j));
-        // }
-        // for (int j = 0; j < distances.length() - 1; ++j){
-        //     int min_idx = j;
-        //     for (int k = j + 1; k < distances.length(); ++k){
-        //         if (distances.get(k).first < distances.get(min_idx).first){
-        //             min_idx = k;
-        //         }
-        //     }
-        //     swap(distances.get(j), distances.get(min_idx));
-        // }
+        double *distance = new double[X_train.data->length()]();
+        int *labels = new int[X_train.data->length()]();
 
         for (int j = 0; j < X_train.data->length(); ++j){
             distance[j] = EuclideanDistance(this->data->get(i), X_train.data->get(j));
             labels[j] = y_train.data->get(j)->get(0);
             // cout << "distance: " << distance[j] << " label: " << labels[j] << endl;
         }
-
+        // Sorting the distances and labels
         for (int j = 0; j < X_train.data->length() - 1; ++j){
             int min_idx = j;
             for (int k = j + 1; k < X_train.data->length(); ++k){
@@ -512,25 +481,29 @@ Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) 
             }
         }
 
-        int label_counts[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        int *label_counts = new int[10]();
         for (int j = 0; j < k; ++j){
             label_counts[labels[j]]++;
         }
 
-        int max_idx = findMax(label_counts);
-        cout << "max_idx: " << max_idx << endl;
+        int max_idx = findMaxIndexOf10(label_counts);
+        // cout << "max_idx: " << max_idx << endl;
         List<int>* temp = new LList<int>;
         temp->push_back(max_idx);
         y_pred.data->push_back(temp);
+
+        delete[] distance;
+        delete[] labels;
+        delete[] label_counts;
     }
     return y_pred;
 }
 
 
 double Dataset::score(const Dataset& y_test) const {
-    if (this->data->length() != y_test.data->length() || 
-        this->data->length() == 0 ||
-        y_test.data->length() == 0){ 
+    if ( this->data->length() != y_test.data->length() || 
+         this->data->length() == 0 ||
+        y_test.data->length() == 0 ){ 
         return -1; 
         }
     int count = 0;
@@ -571,37 +544,47 @@ string commaToSpace(string str)
     return str;
 }
 
-int roundNumber(double num) {
-    return (num > 0.0) ? (num + 0.5) : (num - 0.5);
-}
-
-void train_test_split(Dataset& X, Dataset& y, double test_size, 
-                      Dataset& X_train, Dataset& X_test, 
-                      Dataset& y_train, Dataset& y_test) 
+void train_test_split(Dataset &X, Dataset &Y, double test_size,
+                      Dataset &X_train, Dataset &X_test, 
+                      Dataset &Y_train, Dataset &Y_test)
 {
-    if (test_size <= 0 || test_size >= 1) { return; }
-    int nRows, nCols; 
-    X.getShape(nRows, nCols);
-    //training split 
-    int trainSize = roundNumber(nRows * (1 - test_size));
-    X_train = X.extract(0, trainSize - 1, 0, - 1);
-    y_train = y.extract(0, trainSize - 1, 0, 0);
-    //testing split
-    X_test = X.extract(trainSize, -1, 0, -1);
-    y_test = y.extract(trainSize, -1, 0, 0);
+    if (test_size >= 1 || test_size <= 0) return;
+    
+
+
+    int xRows, xCols, yRows, yCols;
+    X.getShape(xRows, xCols);
+    Y.getShape(yRows, yCols);
+
+
+
+    X_train = X.extract(0, (1 - test_size) * xRows - 1, 0, -1);
+    Y_train = Y.extract(0, (1 - test_size) * yRows - 1, 0, 0);
+
+
+    X_test = X.extract((1 - test_size) * xRows, xRows, 0, -1);
+    Y_test = Y.extract((1 - test_size) * yRows, yRows, 0, 0);
 }
 
-int findMax (int arr[]) {
+int findMaxIndexOf10 (int arr[]) {
     int max = arr[0];
+    int max_idx = 0;
     for (int i = 1; i < 10; i++) {
         if (arr[i] > max) {
             max = arr[i];
+            max_idx = i;
         }
     }
-    return max;
+    return max_idx;
 }
 
+int roundedNumber(double n){
+    if (n - (int)n < 0.5){
+        return n;
+    }
+    else{
+        return n + 1;
+    }
+}
 
 /*--------------------end of Other supporting functions--------------------*/
-
-
