@@ -183,7 +183,7 @@ void LList<T>::printStartToEnd(int start, int end) const
     for (int i = 0; i < start; i++) { temp = temp->next; }
     for (int i = start; i < end && i < this->size; i++)
     {
-        if(i == end - 1 || i == this->size - 1) { cout << temp->data << endl; }
+        if(i == end - 1 || i == this->size - 1) { cout << temp->data; }
         else { cout << temp->data << " "; }
         temp = temp->next;
     }
@@ -280,8 +280,10 @@ void Dataset::printHead(int nRows, int nCols) const
     if (nRows > this->data->length()) { nRows = this->data->length(); }
     if (nCols > this->colData->length()) { nCols = this->colData->length(); }
     this->colData->printStartToEnd(0, nCols);
+    cout << endl;
     for (int i = 0; i < nRows; i++) {
         this->data->get(i)->printStartToEnd(0, nCols);
+        if (i != nRows - 1) { cout << endl; }
     }
 }
 
@@ -291,8 +293,12 @@ void Dataset::printTail(int nRows, int nCols) const
     if (nRows > this->data->length()) { nRows = this->data->length(); }
     if (nCols > this->colData->length()) { nCols = this->colData->length(); }
     this->colData->printStartToEnd(this->colData->length() - nCols, this->colData->length());
+    // if the last element is 28x28, then print 28x28
+    if (this->colData->get(this->colData->length() - 1) == "28x28") { cout << "\\r"; }
+    cout << endl;
     for (int i = this->data->length() - nRows; i < this->data->length(); i++) {
         this->data->get(i)->printStartToEnd(this->colData->length() - nCols, this->colData->length());
+        if (i != this->data->length() - 1) { cout << endl; }
     }
 }
 
@@ -459,6 +465,28 @@ string commaToSpace(string str)
     return str;
 }
 
+// void train_test_split(Dataset &X, Dataset &Y, double test_size,
+//                       Dataset &X_train, Dataset &X_test, 
+//                       Dataset &Y_train, Dataset &Y_test)
+// {
+//     if (test_size >= 1 || test_size <= 0) return;
+    
+
+
+//     int xRows, xCols, yRows, yCols;
+//     X.getShape(xRows, xCols);
+//     Y.getShape(yRows, yCols);
+
+//     double train_size = 1 - test_size;
+
+//     X_train = X.extract(0, (1 - test_size) * xRows - 1, 0, -1);
+//     Y_train = Y.extract(0, (1 - test_size) * yRows - 1, 0, 0);
+
+
+//     X_test = X.extract((1 - test_size) * xRows, xRows, 0, -1);
+//     Y_test = Y.extract((1 - test_size) * yRows, yRows, 0, 0);
+// }
+
 void train_test_split(Dataset &X, Dataset &Y, double test_size,
                       Dataset &X_train, Dataset &X_test, 
                       Dataset &Y_train, Dataset &Y_test)
@@ -467,19 +495,26 @@ void train_test_split(Dataset &X, Dataset &Y, double test_size,
     
 
 
-    int xRows, xCols, yRows, yCols;
-    X.getShape(xRows, xCols);
-    Y.getShape(yRows, yCols);
+    int nRows, nCols;
+    X.getShape(nRows, nCols);
+
+    double train_size = 1 - test_size;
+    int nRows_train = roundedNumber(nRows * train_size) - 1;
+
+    X_train = X.extract(0, nRows_train, 0, - 1);
+    Y_train = Y.extract(0, nRows_train, 0,   0);
+
+    X_test = X.extract(nRows_train + 1, nRows, 0, -1);
+    Y_test = Y.extract(nRows_train + 1, nRows, 0,  0);
+
+    // X_train = X.extract(0, (1 - test_size) * xRows - 1, 0, -1);
+    // Y_train = Y.extract(0, (1 - test_size) * yRows - 1, 0, 0);
 
 
-
-    X_train = X.extract(0, (1 - test_size) * xRows - 1, 0, -1);
-    Y_train = Y.extract(0, (1 - test_size) * yRows - 1, 0, 0);
-
-
-    X_test = X.extract((1 - test_size) * xRows, xRows, 0, -1);
-    Y_test = Y.extract((1 - test_size) * yRows, yRows, 0, 0);
+    // X_test = X.extract((1 - test_size) * xRows, xRows, 0, -1);
+    // Y_test = Y.extract((1 - test_size) * yRows, yRows, 0, 0);
 }
+
 
 int findMaxIndexOf10 (int arr[]) {
     int max = arr[0];
