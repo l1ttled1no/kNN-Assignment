@@ -144,25 +144,7 @@ void LList<T>::reverse()
 //     cout << temp->data << endl;
 // }
 
-template<typename T>
-void LList<T>::sort()
-{
-    for (int i = 0; i < size - 1; i++)
-    {
-        Node *min = head;
-        Node *temp = head;
-        for (int j = i + 1; j < size; j++)
-        {
-            if (temp->data < min->data) { min = temp; }
-            temp = temp->next;
-        }
-        swap(min->data, head->data);
-        head = head->next;
-    }
-    Node *temp = head;
-    while (temp->next != nullptr) { temp = temp->next; }
-    tail = temp;
-}
+
 
 template<typename T>
 List<T>* LList<T>::subList(int start, int end)
@@ -188,6 +170,8 @@ void LList<T>::printStartToEnd(int start, int end) const
         temp = temp->next;
     }
 }
+
+
 /*----------------end of LList--------------- */
 
 
@@ -253,21 +237,21 @@ bool Dataset::loadFromCSV(const char* fileName)
     if(file.is_open())
     {
         string dataLine; 
-        file >> dataLine;
-        dataLine = commaToSpace(dataLine);
-        stringstream strStream(dataLine);
-        string temp;
-        while (strStream >> temp) { this->colData->push_back(temp); }
-        while (file >> dataLine)
+        getline(file, dataLine);
+        stringstream s(dataLine); 
+        string colName;
+        while (getline(s, colName, ',')) { this->colData->push_back(colName); }
+        while (getline(file, dataLine))
         {
-            dataLine = commaToSpace(dataLine);
-            stringstream strStream(dataLine);
+            stringstream s(dataLine);
+            string value;
             LList<int> *temp = new LList<int>();
-            int value;
-            while (strStream >> value) { temp->push_back(value); }
+            while (getline(s, value, ','))
+            {
+                temp->push_back(stoi(value));
+            }
             this->data->push_back(temp);
         }
-        file.close();
         return true;
     }    
     // cout << "Cannot open file" << endl;
@@ -293,8 +277,8 @@ void Dataset::printTail(int nRows, int nCols) const
     if (nRows > this->data->length()) { nRows = this->data->length(); }
     if (nCols > this->colData->length()) { nCols = this->colData->length(); }
     this->colData->printStartToEnd(this->colData->length() - nCols, this->colData->length());
-    // if the last element is 28x28, then print 28x28
-    if (this->colData->get(this->colData->length() - 1) == "28x28") { cout << "\\r"; }
+    // // if the last element is 28x28, then print 28x28
+    // if (this->colData->get(this->colData->length() - 1) == "28x28") { cout << "\\r"; } // CAUTION: IF THE TEACHER CHANGING THE TESTCASES, PLEASE DELETE THIS LINE
     cout << endl;
     for (int i = this->data->length() - nRows; i < this->data->length(); i++) {
         this->data->get(i)->printStartToEnd(this->colData->length() - nCols, this->colData->length());
@@ -368,11 +352,17 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
 
 double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const {
     double distance = 0.00;
-    if (x->length() != y->length()) { return -1; }
+    int maxLength = max(x->length(), y->length());
+    int *xArr = new int[maxLength]();
+    int *yArr = new int[maxLength]();
+    x->supportGetArray(xArr);
+    y->supportGetArray(yArr);
     for (int i = 0; i < x->length(); i++) {
-        distance += pow(x->get(i) - y->get(i), 2);
+        distance += pow(xArr[i] - yArr[i], 2);
     }
-    return sqrt(distance);
+    delete[] xArr;
+    delete[] yArr;
+    return distance;
 }
 
 Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
@@ -385,22 +375,15 @@ Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) 
 
         for (int j = 0; j < X_train.data->length(); ++j){
             distance[j] = EuclideanDistance(this->data->get(i), X_train.data->get(j));
+            // bool ifError = false;
+            // distance[j] = this->data->get(i)->EuclidTestSquared(X_train.data->get(j), ifError);
+            distance[j] = sqrt(distance[j]);
+            // if (ifError) { return Dataset(); }
             labels[j] = y_train.data->get(j)->get(0);
             // cout << "distance: " << distance[j] << " label: " << labels[j] << endl;
         }
-        // Sorting the distances and labels
-        for (int j = 0; j < X_train.data->length() - 1; ++j){
-            int min_idx = j;
-            for (int k = j + 1; k < X_train.data->length(); ++k){
-                if (distance[k] < distance[min_idx]){
-                    min_idx = k;
-                }
-            }
-            if (min_idx != j){
-                swap(distance[j], distance[min_idx]);
-                swap(labels[j], labels[min_idx]);
-            }
-        }
+
+        mergeSort(distance, labels, 0, X_train.data->length() - 1);
 
         int *label_counts = new int[10]();
         for (int j = 0; j < k; ++j){
@@ -453,7 +436,6 @@ Dataset kNN::predict(const Dataset& X_test) {
 
 double kNN::score(const Dataset& y_test, const Dataset& y_pred) {
     return y_test.score(y_pred);
-    // return -1;
 }
 
 /* ----------------- end of kNN ----------------- */
@@ -465,27 +447,171 @@ string commaToSpace(string str)
     return str;
 }
 
-// void train_test_split(Dataset &X, Dataset &Y, double test_size,
-//                       Dataset &X_train, Dataset &X_test, 
-//                       Dataset &Y_train, Dataset &Y_test)
+
+// int partition(double mainArr[], int labelArr[], int low, int high)
 // {
-//     if (test_size >= 1 || test_size <= 0) return;
-    
-
-
-//     int xRows, xCols, yRows, yCols;
-//     X.getShape(xRows, xCols);
-//     Y.getShape(yRows, yCols);
-
-//     double train_size = 1 - test_size;
-
-//     X_train = X.extract(0, (1 - test_size) * xRows - 1, 0, -1);
-//     Y_train = Y.extract(0, (1 - test_size) * yRows - 1, 0, 0);
-
-
-//     X_test = X.extract((1 - test_size) * xRows, xRows, 0, -1);
-//     Y_test = Y.extract((1 - test_size) * yRows, yRows, 0, 0);
+//     double pivot = mainArr[high];
+//     int i = low - 1;
+//     for (int j = low; j < high; j++)
+//     {
+//         if (mainArr[j] < pivot)
+//         {
+//             i++;
+//             swap(mainArr[i], mainArr[j]);
+//             swap(labelArr[i], labelArr[j]);
+//         }
+//     }
+//     swap(mainArr[i + 1], mainArr[high]);
+//     swap(labelArr[i + 1], labelArr[high]);
+//     return i + 1;
 // }
+
+// void quickSort(double mainArr[], int labelArr[], int low, int high)
+// {
+//     if (low < high)
+//     {
+//         int pi = partition(mainArr, labelArr, low, high);
+//         quickSort(mainArr, labelArr, low, pi - 1);
+//         quickSort(mainArr, labelArr, pi + 1, high);
+//     }
+// }
+
+// void bubbleSort(double mainArr[], int labelArr[], int n)
+// {
+//     for (int i = 0; i < n - 1; i++)
+//     {
+//         for (int j = 0; j < n - i - 1; j++)
+//         {
+//             if (mainArr[j] > mainArr[j + 1])
+//             {
+//                 swap(mainArr[j], mainArr[j + 1]);
+//                 swap(labelArr[j], labelArr[j + 1]);
+//             }
+//         }
+//     }
+// }
+
+// void selectionSort(double mainArr[], int labelArr[], int n)
+// {
+//     for (int i = 0; i < n - 1; i++)
+//     {
+//         int min_idx = i;
+//         for (int j = i + 1; j < n; j++)
+//         {
+//             if (mainArr[j] < mainArr[min_idx])
+//             {
+//                 min_idx = j;
+//             }
+//         }
+//         if (min_idx != i)
+//         {
+//             swap(mainArr[i], mainArr[min_idx]);
+//             swap(labelArr[i], labelArr[min_idx]);
+//         }
+//     }
+// }
+
+// int minIdx(double mainArr[], int n, int index)
+// {
+//     int min_idx = index;
+//     for (int i = index + 1; i < n; i++)
+//     {
+//         if (mainArr[i] < mainArr[min_idx])
+//         {
+//             min_idx = i;
+//         }
+//     }
+//     return min_idx;
+// }
+
+// void recurSelectionSort(double mainArr[], int labelArr[], int n, int index)
+// {
+//     if (index == n) { return; }
+//     int min_idx = minIdx(mainArr, n, index);
+//     if (min_idx != index)
+//     {
+//         swap(mainArr[min_idx], mainArr[index]);
+//         swap(labelArr[min_idx], labelArr[index]);
+//     }
+//     recurSelectionSort(mainArr, labelArr, n, index + 1);
+// }
+
+// void insertionSort(double mainArr[], int labelArr[], int n)
+// {
+//     for (int i = 1; i < n; i++)
+//     {
+//         double key = mainArr[i];
+//         int key_label = labelArr[i];
+//         int j = i - 1;
+//         while (j >= 0 && mainArr[j] > key)
+//         {
+//             mainArr[j + 1] = mainArr[j];
+//             labelArr[j + 1] = labelArr[j];
+//             j--;
+//         }
+//         mainArr[j + 1] = key;
+//         labelArr[j + 1] = key_label;
+//     }
+// }
+
+void merge(double mainArr[], int labelArr[], int l, int m, int r){
+    int n1 = m - l + 1;
+    int n2 = r - m;
+
+    double *L = new double[n1], *R = new double[n2];
+    int *L_label = new int[n1], *R_label = new int[n2];
+
+    for (int i = 0; i < n1; i++){
+        L[i] = mainArr[l + i];
+        L_label[i] = labelArr[l + i];
+    }
+    for (int i = 0; i < n2; i++){
+        R[i] = mainArr[m + 1 + i];
+        R_label[i] = labelArr[m + 1 + i];
+    }
+
+    int i = 0, j = 0, k = l;
+    while (i < n1 && j < n2){
+        if (L[i] <= R[j]){
+            mainArr[k] = L[i];
+            labelArr[k] = L_label[i];
+            i++;
+        }
+        else{
+            mainArr[k] = R[j];
+            labelArr[k] = R_label[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < n1){
+        mainArr[k] = L[i];
+        labelArr[k] = L_label[i];
+        i++;
+        k++;
+    }
+
+    while (j < n2){
+        mainArr[k] = R[j];
+        labelArr[k] = R_label[j];
+        j++;
+        k++;
+    }
+    delete[] L;
+    delete[] R;
+    delete[] L_label;
+    delete[] R_label;
+}
+
+void mergeSort(double mainArr[], int labelArr[], int l, int r){
+    if (l < r){
+        int m = l + (r - l) / 2;
+        mergeSort(mainArr, labelArr, l, m);
+        mergeSort(mainArr, labelArr, m + 1, r);
+        merge(mainArr, labelArr, l, m, r);
+    }
+}
 
 void train_test_split(Dataset &X, Dataset &Y, double test_size,
                       Dataset &X_train, Dataset &X_test, 
@@ -493,8 +619,6 @@ void train_test_split(Dataset &X, Dataset &Y, double test_size,
 {
     if (test_size >= 1 || test_size <= 0) return;
     
-
-
     int nRows, nCols;
     X.getShape(nRows, nCols);
 
@@ -506,13 +630,6 @@ void train_test_split(Dataset &X, Dataset &Y, double test_size,
 
     X_test = X.extract(nRows_train + 1, nRows, 0, -1);
     Y_test = Y.extract(nRows_train + 1, nRows, 0,  0);
-
-    // X_train = X.extract(0, (1 - test_size) * xRows - 1, 0, -1);
-    // Y_train = Y.extract(0, (1 - test_size) * yRows - 1, 0, 0);
-
-
-    // X_test = X.extract((1 - test_size) * xRows, xRows, 0, -1);
-    // Y_test = Y.extract((1 - test_size) * yRows, yRows, 0, 0);
 }
 
 
@@ -536,5 +653,7 @@ int roundedNumber(double n){
         return n + 1;
     }
 }
+
+
 
 /*--------------------end of Other supporting functions--------------------*/

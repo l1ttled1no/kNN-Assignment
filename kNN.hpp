@@ -18,9 +18,10 @@ public:
     virtual void print() const = 0;
     virtual void reverse() = 0;
     // virtual void sort() = 0;
-
     virtual List<T>* subList(int start, int end) = 0;
     virtual void printStartToEnd(int start, int end) const = 0; 
+    virtual void supportGetArray(T* arr) const = 0;
+    // virtual T EuclidTe1stSquared(List<T>* others, bool& ifError) const = 0;
 };
 /*--------------------End of class List--------------------*/
 
@@ -58,9 +59,16 @@ class LList : public List<T> {
         void reverse();
         // void begin();
         // void end();
-        void sort();
+        // void sort();
         List<T>* subList(int start, int end);
         void printStartToEnd (int start, int end) const;
+        void supportGetArray(T* arr) const{
+            Node* temp = head;
+            for (int i = 0; i < size; i++) {
+                arr[i] = temp->data;
+                temp = temp->next;
+            }
+        }
 };
 /*--------------------End of class LList--------------------*/
 
@@ -90,9 +98,7 @@ public:
 };
 /*----------------------end of DataSet Class------------------------*/
 
-
-
-
+/*--------------------Start of class kNN--------------------*/
 class kNN {
 private:
     int k;
@@ -106,8 +112,7 @@ public:
     Dataset predict(const Dataset& X_test);
     double score(const Dataset& y_test, const Dataset& y_pred);
 };
-
-
+/*--------------------End of class kNN--------------------*/
 
 
 /*--------------------Others supporting functions--------------------*/
@@ -120,6 +125,22 @@ void train_test_split(Dataset& X, Dataset& y, double test_size,
 int findMaxIndexOf10 (int arr[]);
 
 int roundedNumber (double num);
+
+// int partition(double mainArr[], int labelArr[], int low, int high);
+// void quickSort(double mainArr[], int labelArr[], int low, int high);
+
+// void bubbleSort(double mainArr[], int labelArr[], int n);
+
+void selectionSort(double mainArr[], int labelArr[], int n);
+
+// int minIdx(double mainArr[], int n, int index);
+// void recurSelectionSort(double mainArr[], int labelArr[], int n, int index);
+
+// void insertionSort(double mainArr[], int labelArr[], int n);
+
+void merge(double mainArr[], int labelArr[], int l, int m, int r);
+void mergeSort(double mainArr[], int labelArr[], int l, int r);
+
 //------------------ End of declaration ------------------//
 
 
