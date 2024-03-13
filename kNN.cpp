@@ -342,7 +342,7 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
         extractData.colData->push_back(this->colData->get(i));
     }
     for (int i = startRow; i <= endRow; i++) {
-        extractData.data->push_back(this->data->get(i)->getgetSubList(startCol, endCol));
+        extractData.data->push_back(this->data->get(i)->getSubList(startCol, endCol));
     }
     return extractData;
 }
