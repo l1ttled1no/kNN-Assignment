@@ -51,6 +51,7 @@
         "typeinfo": "cpp",
         "format": "cpp",
         "xutility": "cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "list": "cpp"
     }
 }

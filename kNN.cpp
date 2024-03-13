@@ -138,16 +138,10 @@ void LList<T>::reverse()
     head = prev;
 }
 
-// template<typename T>
-// void LList<T>::begin() {
-//     Node* temp = head;
-//     cout << temp->data << endl;
-// }
-
 
 
 template<typename T>
-List<T>* LList<T>::subList(int start, int end)
+List<T>* LList<T>::getSubList(int start, int end)
 {
     if(start < 0 || start >= size || end < 0 || end >= size || start > end) { return nullptr; }
     LList<T> *sub = new LList<T>();
@@ -159,7 +153,7 @@ List<T>* LList<T>::subList(int start, int end)
 
 
 template<typename T>
-void LList<T>::printStartToEnd(int start, int end) const
+void LList<T>::printStartEnd(int start, int end) const
 {
     Node *temp = head;
     for (int i = 0; i < start; i++) { temp = temp->next; }
@@ -186,6 +180,10 @@ Dataset::Dataset()
 
 Dataset::~Dataset()
 {
+    for (int i = 0; i < this->data->length(); i++) {
+        this->data->get(i)->clear();
+        delete this->data->get(i);
+    }
     delete this->colData;
     delete this->data;
 }
@@ -213,6 +211,8 @@ Dataset::Dataset(const Dataset &other)
 
 Dataset& Dataset::operator=(const Dataset &other)
 {
+    if (this == &other) { return *this; }
+    this->~Dataset();
     this->colData = new LList<string>();
     this->data = new LList<List<int>*>();
     for (int i = 0; i < other.colData->length(); i++) { 
@@ -254,7 +254,6 @@ bool Dataset::loadFromCSV(const char* fileName)
         }
         return true;
     }    
-    // cout << "Cannot open file" << endl;
     return false; 
 }
 
@@ -263,10 +262,10 @@ void Dataset::printHead(int nRows, int nCols) const
     if (nRows <= 0 || nCols <= 0 || !this->data->length()) { return; }
     if (nRows > this->data->length()) { nRows = this->data->length(); }
     if (nCols > this->colData->length()) { nCols = this->colData->length(); }
-    this->colData->printStartToEnd(0, nCols);
+    this->colData->printStartEnd(0, nCols);
     cout << endl;
     for (int i = 0; i < nRows; i++) {
-        this->data->get(i)->printStartToEnd(0, nCols);
+        this->data->get(i)->printStartEnd(0, nCols);
         if (i != nRows - 1) { cout << endl; }
     }
 }
@@ -276,12 +275,10 @@ void Dataset::printTail(int nRows, int nCols) const
     if (nRows <= 0 || nCols <= 0 || !this->data->length()) { return; }
     if (nRows > this->data->length()) { nRows = this->data->length(); }
     if (nCols > this->colData->length()) { nCols = this->colData->length(); }
-    this->colData->printStartToEnd(this->colData->length() - nCols, this->colData->length());
-    // // if the last element is 28x28, then print 28x28
-    // if (this->colData->get(this->colData->length() - 1) == "28x28") { cout << "\\r"; } // CAUTION: IF THE TEACHER CHANGING THE TESTCASES, PLEASE DELETE THIS LINE
+    this->colData->printStartEnd(this->colData->length() - nCols, this->colData->length());
     cout << endl;
     for (int i = this->data->length() - nRows; i < this->data->length(); i++) {
-        this->data->get(i)->printStartToEnd(this->colData->length() - nCols, this->colData->length());
+        this->data->get(i)->printStartEnd(this->colData->length() - nCols, this->colData->length());
         if (i != this->data->length() - 1) { cout << endl; }
     }
 }
@@ -340,12 +337,12 @@ Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) con
     if (startRow > endRow || startCol > endCol) { return Dataset(); }
     if (startRow < 0 || startCol < 0) { return Dataset(); }
     Dataset extractData; 
-    //using subList
+    //using getgetSubList
     for (int i = startCol; i <= endCol; i++) {
         extractData.colData->push_back(this->colData->get(i));
     }
     for (int i = startRow; i <= endRow; i++) {
-        extractData.data->push_back(this->data->get(i)->subList(startCol, endCol));
+        extractData.data->push_back(this->data->get(i)->getgetSubList(startCol, endCol));
     }
     return extractData;
 }
@@ -365,18 +362,17 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
     return sqrt(distance);
 }
 
-Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
-    //this = X_test
+Dataset Dataset::predictDataset(const Dataset& X_train, const Dataset& y_train, int k) const {
+    //this = X_test     
     Dataset y_pred;
     y_pred.colData->push_back("label");
     for (int i = 0; i < this->data->length(); ++i){
         double *distance = new double[X_train.data->length()]();
         // int *labels = new int[X_train.data->length()]();
         int *labelIndex = new int[X_train.data->length()]();
-        // using getArray to get label
+
         for (int j = 0; j < X_train.data->length(); ++j){
             distance[j] = EuclideanDistance(this->data->get(i), X_train.data->get(j));
-            // labels[j] = y_train.data->get(j)->get(0);
             labelIndex[j] = j;
         }
 
@@ -389,7 +385,6 @@ Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) 
         }
 
         int max_idx = findMaxIndexOf10(label_counts);
-        // cout << "max_idx: " << max_idx << endl;
         List<int>* temp = new LList<int>;
         temp->push_back(max_idx);
         y_pred.data->push_back(temp);
@@ -430,7 +425,7 @@ void kNN::fit(const Dataset& X_train, const Dataset& y_train) {
 }
 
 Dataset kNN::predict(const Dataset& X_test) {
-    return X_test.predict(this->X_train, this->y_train, this->k);
+    return X_test.predictDataset(this->X_train, this->y_train, this->k);
 }
 
 double kNN::score(const Dataset& y_test, const Dataset& y_pred) {
