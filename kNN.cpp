@@ -362,7 +362,7 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
     }
     delete[] xArr;
     delete[] yArr;
-    return distance;
+    return sqrt(distance);
 }
 
 Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) const {
@@ -371,23 +371,21 @@ Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) 
     y_pred.colData->push_back("label");
     for (int i = 0; i < this->data->length(); ++i){
         double *distance = new double[X_train.data->length()]();
-        int *labels = new int[X_train.data->length()]();
-
+        // int *labels = new int[X_train.data->length()]();
+        int *labelIndex = new int[X_train.data->length()]();
+        // using getArray to get label
         for (int j = 0; j < X_train.data->length(); ++j){
             distance[j] = EuclideanDistance(this->data->get(i), X_train.data->get(j));
-            // bool ifError = false;
-            // distance[j] = this->data->get(i)->EuclidTestSquared(X_train.data->get(j), ifError);
-            distance[j] = sqrt(distance[j]);
-            // if (ifError) { return Dataset(); }
-            labels[j] = y_train.data->get(j)->get(0);
-            // cout << "distance: " << distance[j] << " label: " << labels[j] << endl;
+            // labels[j] = y_train.data->get(j)->get(0);
+            labelIndex[j] = j;
         }
 
-        mergeSort(distance, labels, 0, X_train.data->length() - 1);
+        mergeSort(distance, labelIndex, 0, X_train.data->length() - 1);
 
         int *label_counts = new int[10]();
         for (int j = 0; j < k; ++j){
-            label_counts[labels[j]]++;
+            // label_counts[labels[j]]++;
+            label_counts[y_train.data->get(labelIndex[j])->get(0)]++;
         }
 
         int max_idx = findMaxIndexOf10(label_counts);
@@ -397,7 +395,8 @@ Dataset Dataset::predict(const Dataset& X_train, const Dataset& y_train, int k) 
         y_pred.data->push_back(temp);
 
         delete[] distance;
-        delete[] labels;
+        // delete[] labels;
+        delete[] labelIndex;
         delete[] label_counts;
     }
     return y_pred;
