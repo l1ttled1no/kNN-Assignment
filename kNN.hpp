@@ -77,8 +77,6 @@ class Dataset {
 private:
     List<string>* colData; 
     List<List<int>*>* data;
-    // ArrayList<ArrayList<int>*>* data;
-    //You may need to define more
 public:
     Dataset(); //Done
     ~Dataset(); //Done

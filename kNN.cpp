@@ -80,7 +80,7 @@ void LList<T>::remove(int index)
 template<typename T>
 T& LList<T>::get(int index) const
 {
-    if(index < 0 || index >= size) { throw std::out_of_range("get(): Out of range"); }
+    if(index < 0 || index >= size) { throw std::out_of_range("get(): Out of range");}
     Node *curr = head;
     for (int i = 0; i < index; i++) { curr = curr->next; }
     return curr->data;
@@ -112,10 +112,13 @@ template<typename T>
 void LList<T>::print() const
 {
     Node *temp = head;
+    if (temp == nullptr) { 
+        cout << " ";
+        return;
+    }
     for (int i = 0; i < size; i++)
     {
-        if(i == size - 1) { cout << temp->data; }
-        else { cout << temp->data << " "; }
+        cout << temp->data << " ";
         temp = temp->next;
     }
     cout << endl;
@@ -143,12 +146,33 @@ void LList<T>::reverse()
 template<typename T>
 List<T>* LList<T>::getSubList(int start, int end)
 {
-    if(start < 0 || start >= size || end < 0 || end >= size || start > end) { return nullptr; }
+    // if (end >= size) end = size - 1;
+    // if (start < 0 || start > end) return nullptr;
+    // if (start >= size) return nullptr;
+    // LList<T> *sub = new LList<T>();
+    // Node *temp = head;
+    // for (int i = 0; i < start; i++) { temp = temp->next; }
+    // for (int i = start; i <= end; i++)
+    // {
+    //     sub->push_back(temp->data);
+    //     temp = temp->next;
+    // }
+    // return sub;
+
+    //subList dùng để cắt danh sách liên kết từ đoạn start đến end nếu end lớn hơn size thì lấy hết từ 
+    //start đến cuối và nếu start lớn hơn size thì bỏ qua, không bao gồm end, luôn đảm bảo end > start
     LList<T> *sub = new LList<T>();
+    if (end > size) end = size;
+    if (start < 0 || start > end) return sub;
+    if (start > size) return sub;
     Node *temp = head;
     for (int i = 0; i < start; i++) { temp = temp->next; }
-    for (int i = start; i <= end; i++) { sub->push_back(temp->data); temp = temp->next; }
-    return sub;
+    for (int i = start; i < end; i++)
+    {
+        sub->push_back(temp->data);
+        temp = temp->next;
+    }
+    return sub; 
 }
 
 
@@ -245,12 +269,20 @@ bool Dataset::loadFromCSV(const char* fileName)
         {
             stringstream s(dataLine);
             string value;
+            bool isPush = false;
             LList<int> *temp = new LList<int>();
             while (getline(s, value, ','))
             {
+                if (value == "") {
+                    isPush = false;
+                    break;
+                }
                 temp->push_back(stoi(value));
+                isPush = true;
             }
-            this->data->push_back(temp);
+
+            if (isPush) this->data->push_back(temp);
+            else { delete temp; }
         }
         return true;
     }    
@@ -259,35 +291,108 @@ bool Dataset::loadFromCSV(const char* fileName)
 
 void Dataset::printHead(int nRows, int nCols) const
 {
-    if (nRows <= 0 || nCols <= 0 || !this->data->length()) { return; }
-    if (nRows > this->data->length()) { nRows = this->data->length(); }
-    if (nCols > this->colData->length()) { nCols = this->colData->length(); }
-    this->colData->printStartEnd(0, nCols);
-    cout << endl;
-    for (int i = 0; i < nRows; i++) {
-        this->data->get(i)->printStartEnd(0, nCols);
-        if (i != nRows - 1) { cout << endl; }
+    int this_nRows, this_nCols;
+    bool isPrintColToEnd = false;
+    this->getShape(this_nRows, this_nCols);
+    if (nRows <= 0 || nCols <= 0) { 
+        // cout << "triggered 1" << endl; 
+        return;     
+    }
+    if (!this->data->length()) {
+        this->colData->printStartEnd(0, nCols);
+        // cout << "triggered 2" << endl;
+        return;
+    }
+
+    if (nRows > this_nRows || nCols > this_nCols) {
+        bool isPrintColToEnd = false; 
+        if (nRows > this_nRows) { nRows = this_nRows;}
+        if (nCols > this_nCols) { 
+            nCols = this_nCols;
+            isPrintColToEnd = true; 
+        }
+        if (isPrintColToEnd){ 
+            this->colData->printStartEnd(0, this->colData->length());
+        }
+        else {
+            this->colData->printStartEnd(0, nCols);
+        }
+        cout << endl;
+        for (int i = 0; i < nRows; i++) {
+            this->data->get(i)->printStartEnd(0, nCols);
+            if (i != nRows - 1) { cout << endl; }
+        }
+       
+        return;
+    }
+
+
+    else {
+        this->colData->printStartEnd(0, nCols);
+        cout << endl;
+        for (int i = 0; i < nRows; i++) {
+            this->data->get(i)->printStartEnd(0, nCols);
+            if (i != nRows - 1) { cout << endl; }
+        }
+       
+        return;
     }
 }
 
 void Dataset::printTail(int nRows, int nCols) const
 {
-    if (nRows <= 0 || nCols <= 0 || !this->data->length()) { return; }
-    if (nRows > this->data->length()) { nRows = this->data->length(); }
-    if (nCols > this->colData->length()) { nCols = this->colData->length(); }
-    this->colData->printStartEnd(this->colData->length() - nCols, this->colData->length());
-    cout << endl;
-    for (int i = this->data->length() - nRows; i < this->data->length(); i++) {
-        this->data->get(i)->printStartEnd(this->colData->length() - nCols, this->colData->length());
-        if (i != this->data->length() - 1) { cout << endl; }
+    int this_nRows, this_nCols;
+    this->getShape(this_nRows, this_nCols);
+    if (nRows <= 0 || nCols <= 0) { return; }
+    if (!this->data->length()) {
+        this->colData->printStartEnd(this->colData->length() - nCols, this->colData->length());
+        return;
+    }
+    // cout << "this_nRows: " << this_nRows << " this_nCols: " << this_nCols << endl;
+    if (nRows > this_nRows || nCols > this_nCols) {
+        bool isPrintColToEnd = false; 
+        if (nRows > this_nRows) { nRows = this_nRows; }
+        if (nCols > this_nCols) { 
+            nCols = this_nCols;
+            isPrintColToEnd = true; 
+        }
+        if (isPrintColToEnd){ 
+            this->colData->printStartEnd(this_nCols - nCols, this->colData->length());
+            if (this->data->length() == 0) { return; }
+            else { cout << endl; }
+        }
+        else {
+            this->colData->printStartEnd(this_nCols - nCols, this_nCols);
+            if (this->data->length() == 0) { return; }
+            else { cout << endl; }
+        }
+        
+        for (int i = this_nRows - nRows; i < this_nRows; i++) {
+            this->data->get(i)->printStartEnd(this_nCols - nCols, this_nCols);
+            if (i != this_nRows - 1) { cout << endl; }
+        }
+        return;
+    }
+    else {
+        this->colData->printStartEnd(this_nCols - nCols, this_nCols);
+        cout << endl;
+        for (int i = this_nRows - nRows; i < this_nRows; i++) {
+            this->data->get(i)->printStartEnd(this_nCols - nCols, this_nCols);
+            if (i != this_nRows - 1) { cout << endl; }
+        }
+        return;
     }
 }
 
 void Dataset::getShape (int& nRows, int& nCols) const
 {
-    if (!this->data->length()) { nRows = nCols = 0; return; }
+    if (!this->data->length() || !this->colData->length()) { nRows = nCols = 0; return; }
     nRows = this->data->length();
-    nCols = this->colData->length();
+    int max = this->data->get(0)->length();
+    for (int i = 1; i < this->data->length(); i++) {
+        if (this->data->get(i)->length() > max) { max = this->data->get(i)->length(); }
+    }
+    nCols = max;
 }
 
 void Dataset::columns() const
@@ -310,7 +415,7 @@ bool Dataset::drop (int axis, int index, string column) {
             //delete a column
             if (column == "") { return false; }
             //if theres no data, return false
-            if (this->data->length() == 0) { return false; }
+            // if (this->data->length() == 0) { return false; }
             int idx = -1;
             for (int i = 0; i < this->colData->length(); i++) {
                 if (this->colData->get(i) == column) { //find the index of the column
@@ -324,6 +429,7 @@ bool Dataset::drop (int axis, int index, string column) {
                     this->data->get(i)->remove(idx);
                 }
                 this->colData->remove(idx);
+                if (this->colData->length() == 0) { this->data->clear(); }
                 return true;
             }
         }
@@ -332,17 +438,40 @@ bool Dataset::drop (int axis, int index, string column) {
 }
 
 Dataset Dataset::extract(int startRow, int endRow, int startCol, int endCol) const {
-    if (endRow == -1 || endRow >= this->data->length()) endRow = this->data->length() - 1;
-    if (endCol == -1 || endCol >= this->colData->length()) endCol = this->colData->length() - 1;
-    if (startRow > endRow || startCol > endCol) { return Dataset(); }
-    if (startRow < 0 || startCol < 0) { return Dataset(); }
-    Dataset extractData; 
-    //using getgetSubList
+    int nRows, nCols;
+    Dataset extractData;
+    this->getShape(nRows, nCols);
+
+    // cout << "DATA LENGTH: " << this->data->length() << endl;
+    // cout << "nRows: " << nRows << " nCols: " << nCols << endl;
+    if ((nRows == 0 && nCols == 0) || this->colData->length() == 0) { throw std::out_of_range("get(): Out of range");}
+    // if (startRow < 0 || startRow >= nRows) { return extractData; }
+    // if (startCol < 0 || startCol >= nCols) { return extractData; }
+    // if (endCol < 0 && endCol != -1) { return extractData; } //endCol = -1 means extract to the end
+    // if (endRow < 0 && endRow != -1) { return extractData; } //endRow = -1 means extract to the end
+
+if (startRow < 0 || startRow >= nRows || 
+    startCol < 0 || startCol >= nCols || 
+    startCol >= colData->length() ||
+    (endCol < -1) || (endRow < -1)) { 
+        throw std::out_of_range("get(): Out of range");
+}
+
+    if (endRow == -1 || endRow >= nRows) { endRow = nRows - 1; }
+    if (endCol == -1 || endCol >= nCols) { endCol = nCols - 1; }
+
+    if (startRow > endRow || startCol > endCol) { throw std::out_of_range("get(): Out of range");}
+    // cout << "if pass" << endl;
     for (int i = startCol; i <= endCol; i++) {
-        extractData.colData->push_back(this->colData->get(i));
+        if (i < this->colData->length()) { extractData.colData->push_back(this->colData->get(i)); }
+        else { extractData.colData->push_back(""); }
     }
     for (int i = startRow; i <= endRow; i++) {
-        extractData.data->push_back(this->data->get(i)->getSubList(startCol, endCol));
+        List <int>* temp = new LList<int>;
+        for (int j = startCol; j <= endCol; j++) {
+            temp->push_back(this->data->get(i)->get(j));
+        }
+        extractData.data->push_back(temp);
     }
     return extractData;
 }
@@ -365,6 +494,7 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
 Dataset Dataset::predictDataset(const Dataset& X_train, const Dataset& y_train, int k) const {
     //this = X_test     
     Dataset y_pred;
+    if (this->data->length() == 0 || X_train.data->length() == 0) { return y_pred; }
     y_pred.colData->push_back("label");
     for (int i = 0; i < this->data->length(); ++i){
         double *distance = new double[X_train.data->length()]();
@@ -372,6 +502,7 @@ Dataset Dataset::predictDataset(const Dataset& X_train, const Dataset& y_train, 
         int *labelIndex = new int[X_train.data->length()]();
 
         for (int j = 0; j < X_train.data->length(); ++j){
+
             distance[j] = EuclideanDistance(this->data->get(i), X_train.data->get(j));
             labelIndex[j] = j;
         }
@@ -379,6 +510,7 @@ Dataset Dataset::predictDataset(const Dataset& X_train, const Dataset& y_train, 
         mergeSort(distance, labelIndex, 0, X_train.data->length() - 1);
 
         int *label_counts = new int[10]();
+        if (k > X_train.data->length()) { k = X_train.data->length(); }
         for (int j = 0; j < k; ++j){
             // label_counts[labels[j]]++;
             label_counts[y_train.data->get(labelIndex[j])->get(0)]++;
@@ -402,7 +534,7 @@ double Dataset::score(const Dataset& y_test) const {
     if ( this->data->length() != y_test.data->length() || 
          this->data->length() == 0 ||
         y_test.data->length() == 0 ){ 
-        return -1; 
+        throw std::out_of_range("get(): Out of range");
         }
     int count = 0;
     for (int i = 0; i < this->data->length(); i++) {
@@ -611,19 +743,26 @@ void train_test_split(Dataset &X, Dataset &Y, double test_size,
                       Dataset &X_train, Dataset &X_test, 
                       Dataset &Y_train, Dataset &Y_test)
 {
-    if (test_size >= 1 || test_size <= 0) return;
-    
+    // X = feature, Y = label
+    if (X.getData()->length() != Y.getData()->length()) return;
+    // cout << "test_size: " << test_size << endl;
+    if (test_size <= 0 || test_size >= 1) return;
     int nRows, nCols;
     X.getShape(nRows, nCols);
 
     double train_size = 1 - test_size;
-    int nRows_train = roundedNumber(nRows * train_size) - 1;
+    int nRows_train = (nRows * train_size) - 1;
+
+    // Y_train < X_train, return 
+    // if (nRows_train < 0) return;
 
     X_train = X.extract(0, nRows_train, 0, - 1);
     Y_train = Y.extract(0, nRows_train, 0,   0);
 
     X_test = X.extract(nRows_train + 1, nRows, 0, -1);
     Y_test = Y.extract(nRows_train + 1, nRows, 0,  0);
+
+
 }
 
 
@@ -639,14 +778,14 @@ int findMaxIndexOf10 (int arr[]) {
     return max_idx;
 }
 
-int roundedNumber(double n){
-    if (n - (int)n < 0.5){
-        return n;
-    }
-    else{
-        return n + 1;
-    }
-}
+// int roundedNumber(double n){
+//     if (n - (int)n < 0.5){
+//         return n;
+//     }
+//     else{
+//         return n + 1;
+//     }
+// }
 
 
 
