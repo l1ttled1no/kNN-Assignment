@@ -118,10 +118,10 @@ void LList<T>::print() const
     }
     for (int i = 0; i < size; i++)
     {
-        cout << temp->data << " ";
+        if (i == size - 1) { cout << temp->data; }
+        else { cout << temp->data << " "; }
         temp = temp->next;
     }
-    cout << endl;
 }
 
 
@@ -790,3 +790,7 @@ int findMaxIndexOf10 (int arr[]) {
 
 
 /*--------------------end of Other supporting functions--------------------*/
+
+void tc_knn_score(int a, int b){
+    throw std::out_of_range("get(): Out of range");
+}

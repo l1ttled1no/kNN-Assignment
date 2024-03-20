@@ -125,24 +125,24 @@ void tc1175()
 
 void tc1158()
 {
-int nRows, nCols;
-Dataset dataset;
-dataset.loadFromCSV("mnist.csv");
-Dataset dataset_extract = dataset.extract(0, -2, 0, -1);
-Dataset dataset_extract2 = Dataset(dataset_extract);
-dataset_extract2.getShape(nRows, nCols);
-cout << "Dataset extract shape: " << nRows << "x" << nCols << endl;
+    int nRows, nCols;
+    Dataset dataset;
+    dataset.loadFromCSV("mnist.csv");
+    Dataset dataset_extract = dataset.extract(0, -2, 0, -1);
+    Dataset dataset_extract2 = Dataset(dataset_extract);
+    dataset_extract2.getShape(nRows, nCols);
+    cout << "Dataset extract shape: " << nRows << "x" << nCols << endl;
 }
 
 void tc1160()
 {
-int nRows, nCols;
-Dataset dataset;
-dataset.loadFromCSV("mnist.csv");
-Dataset dataset_extract = dataset.extract(30, 20, 0, -1);
-Dataset dataset_extract2 = dataset_extract;
-dataset_extract2.getShape(nRows, nCols);
-cout << "Dataset extract shape: " << nRows << "x" << nCols << endl;
+    int nRows, nCols;
+    Dataset dataset;
+    dataset.loadFromCSV("mnist.csv");
+    Dataset dataset_extract = dataset.extract(30, 20, 0, -1);
+    Dataset dataset_extract2 = dataset_extract;
+    dataset_extract2.getShape(nRows, nCols);
+    cout << "Dataset extract shape: " << nRows << "x" << nCols << endl;
 }
 
 void tc1148(){
@@ -154,6 +154,12 @@ void tc1148(){
 
 }
 
+void tc1205()
+{
+    tc_knn_score(10, 10);
+}
+
+
 int main() {
 
     // tc3();
@@ -163,6 +169,7 @@ int main() {
     // tc1175();
     // tc1158();
     // tc1160();
-    tc1148();
+    // tc1148();
+    tc1205();
     return 0;
 }
