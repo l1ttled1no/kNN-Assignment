@@ -200,4 +200,4 @@ the computation, and the solution,
 
 --------------------------------end of praying section---------------------------------
 */
-void tc_knn_score(int a, int b);
+

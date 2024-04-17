@@ -39,6 +39,7 @@ template<typename T>
 void LList<T>::insert(int index, T value)
 {
     if(index < 0 || index > size) { return; }
+    // if (index < 0 || index > size) { throw std::out_of_range("get(): Out of range");}
     if (index == 0)              { push_front (value); }
     else if (index == size)      { push_back  (value); }
     else 
@@ -113,7 +114,6 @@ void LList<T>::print() const
 {
     Node *temp = head;
     if (temp == nullptr) { 
-        cout << " ";
         return;
     }
     for (int i = 0; i < size; i++)
@@ -269,19 +269,18 @@ bool Dataset::loadFromCSV(const char* fileName)
         {
             stringstream s(dataLine);
             string value;
-            bool isPush = false;
+            bool isPushed = false;
             LList<int> *temp = new LList<int>();
             while (getline(s, value, ','))
             {
                 if (value == "") {
-                    isPush = false;
+                    isPushed = false;
                     break;
                 }
                 temp->push_back(stoi(value));
-                isPush = true;
+                isPushed = true;
             }
-
-            if (isPush) this->data->push_back(temp);
+            if (isPushed) this->data->push_back(temp);
             else { delete temp; }
         }
         return true;
@@ -414,8 +413,6 @@ bool Dataset::drop (int axis, int index, string column) {
         case 1: {
             //delete a column
             if (column == "") { return false; }
-            //if theres no data, return false
-            // if (this->data->length() == 0) { return false; }
             int idx = -1;
             for (int i = 0; i < this->colData->length(); i++) {
                 if (this->colData->get(i) == column) { //find the index of the column
@@ -425,10 +422,11 @@ bool Dataset::drop (int axis, int index, string column) {
             }
             if (idx == -1) { return false; } //cannot find the column
             else {
+                this->colData->remove(idx);
                 for (int i = 0; i < this->data->length(); i++) {
                     this->data->get(i)->remove(idx);
                 }
-                this->colData->remove(idx);
+                if (this->colData->length() != this->data->length()) { this->colData->insert(idx, ""); }
                 if (this->colData->length() == 0) { this->data->clear(); }
                 return true;
             }
@@ -494,7 +492,7 @@ double Dataset::EuclideanDistance(const List<int>* x, const List<int>* y) const 
 Dataset Dataset::predictDataset(const Dataset& X_train, const Dataset& y_train, int k) const {
     //this = X_test     
     Dataset y_pred;
-    if (this->data->length() == 0 || X_train.data->length() == 0) { return y_pred; }
+    if (this->data->length() == 0 || X_train.data->length() == 0) { throw std::out_of_range("get(): Out of range"); }
     y_pred.colData->push_back("label");
     for (int i = 0; i < this->data->length(); ++i){
         double *distance = new double[X_train.data->length()]();
@@ -510,7 +508,7 @@ Dataset Dataset::predictDataset(const Dataset& X_train, const Dataset& y_train, 
         mergeSort(distance, labelIndex, 0, X_train.data->length() - 1);
 
         int *label_counts = new int[10]();
-        if (k > X_train.data->length()) { k = X_train.data->length(); }
+        if (k > X_train.data->length()) { throw std::out_of_range("get(): Out of range");}
         for (int j = 0; j < k; ++j){
             // label_counts[labels[j]]++;
             label_counts[y_train.data->get(labelIndex[j])->get(0)]++;
@@ -744,14 +742,14 @@ void train_test_split(Dataset &X, Dataset &Y, double test_size,
                       Dataset &Y_train, Dataset &Y_test)
 {
     // X = feature, Y = label
-    if (X.getData()->length() != Y.getData()->length()) return;
+    if (X.getData()->length() != Y.getData()->length()) throw std::out_of_range("get(): Out of range");
     // cout << "test_size: " << test_size << endl;
-    if (test_size <= 0 || test_size >= 1) return;
+    if (test_size <= 0 || test_size >= 1) throw std::out_of_range("get(): Out of range");
     int nRows, nCols;
     X.getShape(nRows, nCols);
 
     double train_size = 1 - test_size;
-    int nRows_train = (nRows * train_size) - 1;
+    double nRows_train = (nRows * train_size) - 1;
 
     // Y_train < X_train, return 
     // if (nRows_train < 0) return;
@@ -790,7 +788,3 @@ int findMaxIndexOf10 (int arr[]) {
 
 
 /*--------------------end of Other supporting functions--------------------*/
-
-void tc_knn_score(int a, int b){
-    throw std::out_of_range("get(): Out of range");
-}

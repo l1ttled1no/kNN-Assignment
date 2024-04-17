@@ -1,5 +1,4 @@
 #include "kNN.hpp"
-#include <chrono>
 
 void tc1(){
     Dataset dataset;
@@ -133,7 +132,6 @@ void tc1158()
     dataset_extract2.getShape(nRows, nCols);
     cout << "Dataset extract shape: " << nRows << "x" << nCols << endl;
 }
-
 void tc1160()
 {
     int nRows, nCols;
@@ -159,6 +157,23 @@ void tc1205()
     tc_knn_score(10, 10);
 }
 
+void tc1204(){
+    tc_knn_score(5, -1);
+}
+
+void tc1201(){
+    tc_knn_score(5, 10);
+}
+
+void tc1203(){
+    tc_knn_score(5, 100);
+}
+
+void dntc1(){
+    LList<int> list;
+    list.push_back(1);
+    list.insert(10, 2);
+}
 
 int main() {
 
@@ -166,10 +181,14 @@ int main() {
     // tc1lms();
     // tc1002();
     // tc1();
-    // tc1175();
+    tc1175();
     // tc1158();
     // tc1160();
     // tc1148();
-    tc1205();
+    // tc1205();
+    // dntc1();
+    tc1204();
+    tc1201();
+    tc1203();
     return 0;
 }
